@@ -399,6 +399,7 @@ REAL(EB) :: H_F_REFERENCE_TEMPERATURE=25._EB                        !< Heat of f
 REAL(EB) :: FREE_BURN_TEMPERATURE=600._EB                           !< Temperature above which fuel and oxygen burn freely (C->K)
 REAL(EB) :: AUTO_IGNITION_TEMPERATURE=-273.15_EB                    !< Temperature above which reaction is allowed (C->K)
 REAL(EB) :: AIT_EXCLUSION_ZONE(6,MAX_AIT_EXCLUSION_ZONES)=-1.E6_EB  !< Volume in which AUTO_IGNITION_TEMPERATURE has no effect
+REAL(EB) :: SPEC_CHEM_CP_FAC=1._EB                                  !< Specific heat scaling for chemical extinction
 
 REAL(FB) :: HRRPUV_MAX_SMV=1200._FB                                 !< Clipping value used by Smokeview (kW/m3)
 REAL(FB) :: TEMP_MAX_SMV=2000._FB                                   !< Clipping value used by Smokeview (C)
@@ -416,6 +417,7 @@ INTEGER :: N_PASSIVE_SCALARS=0                                      !< Number of
 INTEGER :: N_TOTAL_SCALARS=0                                        !< Number of total scalars, tracked and passive
 INTEGER :: N_FIXED_CHEMISTRY_SUBSTEPS=-1                            !< Number of chemistry substeps in combustion routine
 INTEGER :: CFT_REACTION_INDEX=1                                     !< Reaction index to base CFT extinction criterion
+INTEGER :: N_SPEC_CHEM=-1                                           !< Species index for chemical extinction
 
 LOGICAL :: OUTPUT_CHEM_IT=.FALSE.
 LOGICAL :: REAC_SOURCE_CHECK=.FALSE.
@@ -440,7 +442,7 @@ REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: G_F_Z        !< CP_Z(I,J) Gibbs free en
 REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: H_SENS_Z     !< H_SENS(I,J) Sensible enthalpy (J/kg) of lumped species J at temp I (K)
 
 REAL(EB), ALLOCATABLE, DIMENSION(:) :: MWR_Z,RSQ_MW_Z
-CHARACTER(LABEL_LENGTH) :: EXTINCTION_MODEL='null'
+CHARACTER(LABEL_LENGTH) :: EXTINCTION_MODEL='null',SPEC_CHEM_ID='null'
 
 ! Radiation parameters
 

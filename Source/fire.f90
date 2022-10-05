@@ -565,8 +565,8 @@ USE PHYSICAL_FUNCTIONS, ONLY: GET_ENTHALPY
 USE MATH_FUNCTIONS, ONLY: EVALUATE_RAMP
 REAL(EB),INTENT(IN) :: TMP_IN,ZZ_IN(1:N_TRACKED_SPECIES),ZZ_0(1:N_TRACKED_SPECIES)
 LOGICAL, INTENT(INOUT) :: EXTINCT
-REAL(EB) :: ZZ_HAT_0(1:N_TRACKED_SPECIES),ZZ_HAT(1:N_TRACKED_SPECIES),H_0,H_CRIT,PHI_TILDE,CFT
-INTEGER :: NS
+REAL(EB) :: ZZ_HAT_0(1:N_TRACKED_SPECIES),ZZ_HAT(1:N_TRACKED_SPECIES),H_0,H_CRIT,PHI_TILDE,CFT,H_CP
+INTEGER :: NS,ITMP
 TYPE(REACTION_TYPE), POINTER :: R1=>NULL()
 
 IF (.NOT.REACTION(CFT_REACTION_INDEX)%FAST_CHEMISTRY) RETURN
@@ -617,6 +617,22 @@ ENDIF
 
 CALL GET_ENTHALPY(ZZ_HAT_0,H_0,TMP_IN) ! H of reactants participating in reaction (includes chemical enthalpy)
 CALL GET_ENTHALPY(ZZ_HAT,H_CRIT,CFT) ! H of products at the critical flame temperature
+
+! FAC is decreased by 1 to get correct total increase. If cp=1 and the factor is 2 then going up 2 degrees means going from 
+! adding 2 to instead adding 4 or we take the current increase and add (2-1) times it not 2 times it.
+! Not done by calling GET_ENTHALPY to avoid expense of dealing with all tracked species when only 1 is being adjusted
+IF (N_SPEC_CHEM > 0) THEN
+   ITMP = MIN(I_MAX_TEMP-1,INT(TMP_IN))
+   H_CP = CPBAR_Z(ITMP,N_SPEC_CHEM) + (TMP_IN-REAL(ITMP,EB))*(CPBAR_Z(ITMP+1,N_SPEC_CHEM)-CPBAR_Z(ITMP,N_SPEC_CHEM))
+   H_CP = (H_CP*TMP_IN - CPBAR_Z(0,N_SPEC_CHEM))*(SPEC_CHEM_CP_FAC-1._EB)
+   H_0 = H_0 + H_CP*ZZ_HAT_0(N_SPEC_CHEM)
+   ITMP = MIN(I_MAX_TEMP-1,INT(CFT))
+   H_CP = CPBAR_Z(ITMP,N_SPEC_CHEM) + (CFT-REAL(ITMP,EB))*(CPBAR_Z(ITMP+1,N_SPEC_CHEM)-CPBAR_Z(ITMP,N_SPEC_CHEM))
+   H_CP = (H_CP*CFT - CPBAR_Z(0,N_SPEC_CHEM))*(SPEC_CHEM_CP_FAC-1._EB)
+   H_CRIT = H_CRIT + H_CP*ZZ_HAT(N_SPEC_CHEM)
+ENDIF
+
+
 IF (H_0 < H_CRIT) EXTINCT = .TRUE. ! FDS Tech Guide (5.54)
 
 END SUBROUTINE EXTINCT_2
