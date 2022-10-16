@@ -55,9 +55,10 @@ INTEGER, PARAMETER :: INFLOW_OUTFLOW=4           !< Flag for SF\%THERMAL_BC_INDE
 INTEGER, PARAMETER :: INTERPOLATED_BC=6          !< Flag for SF\%THERMAL_BC_INDEX: Interface between two meshes
 INTEGER, PARAMETER :: THERMALLY_THICK_HT3D=7     !< Flag for SF\%THERMAL_BC_INDEX: Thermally thick 3-D solid
 
-INTEGER, PARAMETER :: DEFAULT_HTC_MODEL=0                  !< Flag for SF\%HEAT_TRANSFER_MODEL
-INTEGER, PARAMETER :: LOGLAW_HTC_MODEL=1                   !< Flag for SF\%HEAT_TRANSFER_MODEL
-INTEGER, PARAMETER :: RAYLEIGH_HTC_MODEL=3                 !< Flag for SF\%HEAT_TRANSFER_MODEL
+INTEGER, PARAMETER :: DEFAULT_HTC_MODEL=0          !< Flag for SF\%HEAT_TRANSFER_MODEL
+INTEGER, PARAMETER :: LOGLAW_HTC_MODEL=1           !< Flag for SF\%HEAT_TRANSFER_MODEL
+INTEGER, PARAMETER :: RAYLEIGH_HTC_MODEL=3         !< Flag for SF\%HEAT_TRANSFER_MODEL
+INTEGER, PARAMETER :: FLAME_HTC_MODEL=4            !< Flag for SF\%HEAT_TRANSFER_MODEL
 
 INTEGER, PARAMETER :: WALL_MODEL_BC=2              !< Flag for SF\%VELOCITY_BC_INDEX
 INTEGER, PARAMETER :: FREE_SLIP_BC=3               !< Flag for SF\%VELOCITY_BC_INDEX
@@ -254,6 +255,7 @@ LOGICAL :: WRITE_DEVC_CTRL=.FALSE.                  !< Flag for writing DEVC and
 LOGICAL :: INIT_INVOKED_BY_SURF=.FALSE.             !< Flag indicating that a SURF line specifies an INIT line
 LOGICAL :: NO_PRESSURE_ZONES=.FALSE.                !< Flag to suppress pressure zones
 LOGICAL :: CTRL_DIRECT_FORCE=.FALSE.                !< Allow adjustable direct force via CTRL logic
+LOGICAL :: USE_FLAME_HTC_MODEL=.FALSE.              !< Enhance HTC in the presence of a flame near a surface or particle
 
 INTEGER, ALLOCATABLE, DIMENSION(:) :: CHANGE_TIME_STEP_INDEX      !< Flag to indicate if a mesh needs to change time step
 INTEGER, ALLOCATABLE, DIMENSION(:) :: SETUP_PRESSURE_ZONES_INDEX  !< Flag to indicate if a mesh needs to keep searching for ZONEs
@@ -397,6 +399,7 @@ REAL(EB) :: H_F_REFERENCE_TEMPERATURE=25._EB                        !< Heat of f
 REAL(EB) :: FREE_BURN_TEMPERATURE=600._EB                           !< Temperature above which fuel and oxygen burn freely (C->K)
 REAL(EB) :: AUTO_IGNITION_TEMPERATURE=-273.15_EB                    !< Temperature above which reaction is allowed (C->K)
 REAL(EB) :: AIT_EXCLUSION_ZONE(6,MAX_AIT_EXCLUSION_ZONES)=-1.E6_EB  !< Volume in which AUTO_IGNITION_TEMPERATURE has no effect
+REAL(EB) :: SPEC_CHEM_CP_FAC=1._EB                                  !< Specific heat scaling for chemical extinction
 
 REAL(FB) :: HRRPUV_MAX_SMV=1200._FB                                 !< Clipping value used by Smokeview (kW/m3)
 REAL(FB) :: TEMP_MAX_SMV=2000._FB                                   !< Clipping value used by Smokeview (C)
@@ -414,12 +417,14 @@ INTEGER :: N_PASSIVE_SCALARS=0                                      !< Number of
 INTEGER :: N_TOTAL_SCALARS=0                                        !< Number of total scalars, tracked and passive
 INTEGER :: N_FIXED_CHEMISTRY_SUBSTEPS=-1                            !< Number of chemistry substeps in combustion routine
 INTEGER :: CFT_REACTION_INDEX=1                                     !< Reaction index to base CFT extinction criterion
+INTEGER :: N_SPEC_CHEM=-1                                           !< Species index for chemical extinction
 
 LOGICAL :: OUTPUT_CHEM_IT=.FALSE.
 LOGICAL :: REAC_SOURCE_CHECK=.FALSE.
 LOGICAL :: PILOT_FUEL_MODEL=.FALSE.                                 !< Allow pilot fuel with low AIT
 LOGICAL :: SUBGRID_IGNITION_MODEL=.FALSE.                           !< Add TMP_SGS when checking AIT
 LOGICAL :: COMPUTE_ADIABATIC_FLAME_TEMPERATURE=.TRUE.               !< Report adiabatic flame temperature per REAC in LU_OUTPUT
+LOGICAL :: TRI_MODEL=.FALSE.                                        !< Turbulence-Radiation Interaction submodel
 
 REAL(EB) :: RSUM0                                     !< Initial specific gas constant, \f$ R \sum_i Z_{i,0}/W_i \f$
 
@@ -437,7 +442,7 @@ REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: G_F_Z        !< CP_Z(I,J) Gibbs free en
 REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: H_SENS_Z     !< H_SENS(I,J) Sensible enthalpy (J/kg) of lumped species J at temp I (K)
 
 REAL(EB), ALLOCATABLE, DIMENSION(:) :: MWR_Z,RSQ_MW_Z
-CHARACTER(LABEL_LENGTH) :: EXTINCTION_MODEL='null'
+CHARACTER(LABEL_LENGTH) :: EXTINCTION_MODEL='null',SPEC_CHEM_ID='null'
 
 ! Radiation parameters
 
