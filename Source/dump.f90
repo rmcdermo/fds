@@ -2592,6 +2592,8 @@ REACTION_LOOP: DO N=1,N_REACTIONS
          EXTINCTION_MODEL = 'EXTINCTION 2'
       CASE (EXTINCTION_3)
          EXTINCTION_MODEL = 'EXTINCTION 3'
+      CASE (EXTINCTION_4)
+         EXTINCTION_MODEL = 'EXTINCTION 4'
    END SELECT
 
    IF (N_REACTIONS>1) THEN
@@ -2604,8 +2606,11 @@ REACTION_LOOP: DO N=1,N_REACTIONS
    ENDIF
 
    WRITE(LU_OUTPUT,'(/6X,A)')     'Fuel                                           Heat of Combustion (kJ/kg)'
-   WRITE(LU_OUTPUT,'(6X,A,1X,F12.4)') RN%FUEL,RN%HEAT_OF_COMBUSTION/1000._EB
-
+   IF (ABS(RN%HEAT_OF_COMBUSTION/1000._EB)<999999._EB) THEN
+      WRITE(LU_OUTPUT,'(6X,A,1X,F12.4)') RN%FUEL,RN%HEAT_OF_COMBUSTION/1000._EB
+   ELSE
+      WRITE(LU_OUTPUT,'(6X,A,1X,E12.4)') RN%FUEL,RN%HEAT_OF_COMBUSTION/1000._EB
+   ENDIF
    WRITE(LU_OUTPUT,'(/6X,A)')     'Primitive Species Stoich. Coeff.'
    WRITE(LU_OUTPUT,'(6X,A)')      'Species ID                                                          Molar'
    DO NN=1,N_SPECIES
