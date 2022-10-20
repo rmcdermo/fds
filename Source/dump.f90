@@ -2598,11 +2598,12 @@ REACTION_LOOP: DO N=1,N_REACTIONS
 
    IF (N_REACTIONS>1) THEN
       IF (RN%ID/='null')  THEN
-         WRITE(LU_OUTPUT,'(/3X,A,A)')   'Reaction ID:  ', TRIM(RN%ID)
+         WRITE(LU_OUTPUT,'(/3X,A,A)')    'Reaction ID:  ', TRIM(RN%ID)
       ELSE
          WRITE(LU_OUTPUT,'(/3X,A,I0)')   'Reaction ',N
       ENDIF
-      IF (RN%REVERSE)     WRITE(LU_OUTPUT,'(/6X,A,A)')   'Reverse Reaction of ID:  ', TRIM(RN%FWD_ID)
+                      WRITE(LU_OUTPUT,'(/6X,A,45X,I3)')  'Priority:                ', RN%PRIORITY
+      IF (RN%REVERSE) WRITE(LU_OUTPUT,'(/6X,A,A)'     )  'Reverse Reaction of ID:  ', TRIM(RN%FWD_ID)
    ENDIF
 
    WRITE(LU_OUTPUT,'(/6X,A)')     'Fuel                                           Heat of Combustion (kJ/kg)'
@@ -2754,7 +2755,7 @@ MATL_LOOP: DO N=1,N_MATL
          WRITE(LU_OUTPUT,'(A,ES9.2)')'        A (1/s):                     ',ML%A(NR)
          WRITE(LU_OUTPUT,'(A,ES9.2)')'        E (J/mol):                   ',ML%E(NR)/1000.
          IF (ML%TMP_REF(NR) <= TWO_EPSILON_EB) THEN
-            ITMP = TMPA
+            ITMP = INT(TMPA)
             WRITE(LU_OUTPUT,'(A,I4,A,ES9.2)') '        H_R (kJ/kg) TMPA,    ',ITMP,' K: ',ML%H_R(NR,ITMP)/1000._EB            
          ELSE
             ITMP = NINT(ML%TMP_REF(NR))
