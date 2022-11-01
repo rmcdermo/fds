@@ -618,7 +618,7 @@ ENDIF
 CALL GET_ENTHALPY(ZZ_HAT_0,H_0,TMP_IN) ! H of reactants participating in reaction (includes chemical enthalpy)
 CALL GET_ENTHALPY(ZZ_HAT,H_CRIT,CFT) ! H of products at the critical flame temperature
 
-! FAC is decreased by 1 to get correct total increase. If cp=1 and the factor is 2 then going up 2 degrees means going from 
+! FAC is decreased by 1 to get correct total increase. If cp=1 and the factor is 2 then going up 2 degrees means going from
 ! adding 2 to instead adding 4 or we take the current increase and add (2-1) times it not 2 times it.
 ! Not done by calling GET_ENTHALPY to avoid expense of dealing with all tracked species when only 1 is being adjusted
 IF (N_SPEC_CHEM > 0) THEN
@@ -807,7 +807,7 @@ USE PHYSICAL_FUNCTIONS, ONLY: GET_REALIZABLE_MF,GET_AVERAGE_SPECIFIC_HEAT
 REAL(EB), INTENT(IN) :: ZZ_0(1:N_TRACKED_SPECIES),ZZ_IN(1:N_TRACKED_SPECIES),ZETA_IN,DT_LOC,RHO_HAT,CELL_MASS,TAU_MIX
 REAL(EB), INTENT(OUT) :: ZZ_OUT(1:N_TRACKED_SPECIES),ZETA_OUT,Q_REAC_LOC(1:N_REACTIONS),TOTAL_MIXED_MASS
 REAL(EB), INTENT(INOUT) :: TMP_IN
-REAL(EB) :: ZZ_HAT(1:N_TRACKED_SPECIES),DZZ(1:N_TRACKED_SPECIES),&
+REAL(EB) :: ZZ_HAT_0(1:N_TRACKED_SPECIES),ZZ_HAT(1:N_TRACKED_SPECIES),DZZ(1:N_TRACKED_SPECIES),&
             MIXED_MASS(1:N_TRACKED_SPECIES),MIXED_MASS_0(1:N_TRACKED_SPECIES),&
             Q_REAC_OUT(1:N_REACTIONS),TOTAL_MIXED_MASS_0
 INTEGER, PARAMETER :: INFINITELY_FAST=1,FINITE_RATE=2
@@ -834,10 +834,11 @@ CALL GET_REALIZABLE_MF(ZZ_HAT)
 
 Q_REAC_LOC(:) = 0._EB
 IF (ANY(REACTION(:)%FAST_CHEMISTRY)) THEN
+   ZZ_HAT_0 = ZZ_HAT
    DO PTY = 1,MAX_PRIORITY
       CALL REACTION_RATE(DZZ,ZZ_HAT,DT_LOC,RHO_HAT,TMP_IN,INFINITELY_FAST,Q_REAC_OUT,PRIORITY=PTY)
       EXTINCT_LOC=.FALSE.
-      IF (EXTINCT_MOD==EXTINCTION_4) CALL EXTINCT_4(EXTINCT_LOC,ZZ_HAT,ZZ_HAT+DZZ,TMP_IN,REAC_INDEX=PTY)
+      IF (EXTINCT_MOD==EXTINCTION_4) CALL EXTINCT_4(EXTINCT_LOC,ZZ_HAT_0,ZZ_HAT+DZZ,TMP_IN,REAC_INDEX=PTY)
       IF (.NOT.EXTINCT_LOC) THEN
          ZZ_HAT = ZZ_HAT + DZZ
          Q_REAC_LOC = Q_REAC_LOC + Q_REAC_OUT*TOTAL_MIXED_MASS

@@ -2655,7 +2655,7 @@ REACTION_LOOP: DO N=1,N_REACTIONS
    IF (SUPPRESSION .AND. RN%FAST_CHEMISTRY) THEN
       WRITE(LU_OUTPUT,'(/6X,A,A)')    'Extinction Model:  ', TRIM(EXTINCTION_MODEL)
       WRITE(LU_OUTPUT,'(6X,A,F8.1)')  'Auto-Ignition Temperature (C):          ', RN%AUTO_IGNIT_TMP - TMPM
-      IF (N==CFT_REACTION_INDEX) THEN
+      IF (N==CFT_REACTION_INDEX .OR. EXTINCT_MOD==EXTINCTION_4) THEN
          WRITE(LU_OUTPUT,'(6X,A,F8.1)') 'Critical Flame Temperature (C):         ', RN%CRIT_FLAME_TMP - TMPM
       ELSE
          WRITE(LU_OUTPUT,'(6X,A)')      'Critical Flame Temperature (C):              N/A'
