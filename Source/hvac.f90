@@ -57,7 +57,13 @@ REAL(EB),PUBLIC, ALLOCATABLE, DIMENSION(:,:):: NODE_ZZ_EX !<Area weighted tracke
 REAL(EB),PUBLIC, ALLOCATABLE, DIMENSION(:,:,:):: NODE_ZZ
 !< Contains sum of area weighted tracked species mass fractions over all MPI processes for all VENTs assigned to each NODE
 REAL(EB),PUBLIC, ALLOCATABLE, DIMENSION(:):: PSUM_TOT !< Contains sum of PSUM for merged pressure zones
+INTEGER, PUBLIC :: N_DUCT_QUANTITY=0 !< Number of DUCT output QUANTITY
+INTEGER, PUBLIC :: N_NODE_QUANTITY=0 !< Number of NODE output QUANTITY
 INTEGER, PUBLIC, ALLOCATABLE, DIMENSION(:,:) :: NODE_ZONE !< Array of NODEs belonging to each ZONE
+
+TYPE(HVAC_QUANTITY_TYPE), PUBLIC, TARGET, ALLOCATABLE, DIMENSION(:) :: DUCT_QUANTITY_ARRAY !< DUCT outputs for .hvac file
+TYPE(HVAC_QUANTITY_TYPE), PUBLIC, TARGET, ALLOCATABLE, DIMENSION(:) :: NODE_QUANTITY_ARRAY !< NODE outputs for .hvac file
+
 CONTAINS
 
 !> \brief Reads and processes the HVAC namelist inputs
@@ -70,7 +76,7 @@ INTEGER , PARAMETER :: MAX_DUCTS = 20 !< Maximum number of ducts connected to a 
 INTEGER :: IOS !< Used for returning the status of a READ statement
 INTEGER :: IZERO !< Used for returning the status of an ALLOCATE statement
 INTEGER :: N_HVAC_READ !< Counter for number of HVAC inputs that have been read in
-INTEGER :: NS,N,NC,ND,NN
+INTEGER :: N,NC,ND,NN,NS
 INTEGER :: I_AIRCOIL=0 !< AIRCOIL array index
 INTEGER :: I_DUCT=0 !< DUCT array index
 INTEGER :: I_DUCTNODE=0 !< DUCTNODE array index
@@ -103,6 +109,8 @@ REAL(EB) :: LOADING_MULTIPLIER(MAX_SPECIES) !< Multiplier of LOADING used in com
 REAL(EB) :: LEAK_PRESSURE_EXPONENT !< Exponent for pressure in leakage equation
 REAL(EB) :: LEAK_REFERENCE_PRESSURE !< Reference pressure in leakage equation (Pa)
 REAL(EB) :: DISCHARGE_COEFFICIENT !< Discharge coefficient leakage equation
+REAL(EB) :: WAYPOINTS(30,3) !< Duct waypoints (m)
+LOGICAL :: DEBUG !< Flag indicating known values are output to smokeview for debugging
 LOGICAL :: ROUND !< Flag indicating DUCT has a round cross-section
 LOGICAL :: SQUARE !< Flag indicating DUCT has a square cross-section
 LOGICAL :: DAMPER !< Flag indicating that a damper is present in a DUCT.
@@ -110,6 +118,8 @@ LOGICAL :: REVERSE !< Flag indicating that a specfied flow or FAN in a DUCT is f
 LOGICAL :: AMBIENT !< Flag indicating a DUCTNODE is connected to the ambient.
 LOGICAL :: LEAK_ENTHALPY !< Flag indicating that the boundary condition for a LEAKAGE duct should preserve enthalpy.
 LOGICAL :: INITIALIZED_HVAC_MASS_TRANSPORT !< Flag indicating DUCTs with N_CELLS>1 have been initiazed.
+LOGICAL :: DUCT_QUANTITY_DEFINED=.FALSE. !< Flag indicating a DUCT_QUANTITY list has alreayd been defined
+LOGICAL :: NODE_QUANTITY_DEFINED=.FALSE. !< Flag indicating a NODE_QUANTITY list has alreayd been defined
 CHARACTER(LABEL_LENGTH) :: AIRCOIL_ID !< ID of an AIRCOIL located in a DUCT.
 CHARACTER(LABEL_LENGTH) :: CTRL_ID !< Name of a control function controlling a FAN, damper, or AIRCOIL.
 CHARACTER(LABEL_LENGTH) :: DEVC_ID !< Name of a device controlling a FAN, damper, or AIRCOIL.
@@ -117,23 +127,26 @@ CHARACTER(LABEL_LENGTH) :: DUCT_ID(MAX_DUCTS) !<IDs of DUCTs connected to a DUCT
 CHARACTER(LABEL_LENGTH) :: FAN_ID !< ID of a FAN located in a DUCT.
 CHARACTER(LABEL_LENGTH) :: FILTER_ID !< ID of a FILTER located at a DUCTNODE.
 CHARACTER(LABEL_LENGTH) :: ID !< Name of an HVAC component
+CHARACTER(LABEL_LENGTH) :: NETWORK_ID !< ID of the network.
 CHARACTER(LABEL_LENGTH) :: NODE_ID(2) !< IDs of the nodes for each end of a DUCT.
+CHARACTER(LABEL_LENGTH) :: QUANTITY(20) !QUANTITY list for .hvac file.
+CHARACTER(LABEL_LENGTH) :: QUANTITY_SPEC_ID(20) !<SPEC_ID for QUANTITY list for .hvac file.
 CHARACTER(LABEL_LENGTH) :: RAMP_ID !< Name of a RAMP for DUCT flow, FAN curve, or AIRCOIL heat exchange.
 CHARACTER(LABEL_LENGTH) :: RAMP_LOSS !< Name of a RAMP for the flow loss of a variable damper where T=damper position and F=loss.
 CHARACTER(LABEL_LENGTH) :: SPEC_ID(MAX_SPECIES) !< List of species that are trapped by a filter.
-CHARACTER(LABEL_LENGTH) :: SURF_ID !< Surface type for a duct wall (not currently used).
 CHARACTER(LABEL_LENGTH) :: TYPE_ID !< Type of HVAC component (e.g. DUCT, FAN, DUCTNODE, etc.)
 CHARACTER(LABEL_LENGTH) :: VENT_ID !< Name of a VENT connected to a DUCTNODE or the first node for a LEAKAGE duct
 CHARACTER(LABEL_LENGTH) :: VENT2_ID !< VENT connected to the second node for a LEAKAGE duct
 TYPE(DUCTNODE_TYPE), POINTER :: DN=>NULL() !< Pointer to a DUCTNODE
 TYPE(DUCT_TYPE), POINTER :: DU=>NULL() !< Pointer to a DUCT
+TYPE(HVAC_QUANTITY_TYPE), POINTER :: HQT=> NULL() !< Pointer to a DUCT_ or NODE_QUANTITY_ARRAY
 NAMELIST /HVAC/ AIRCOIL_ID,AMBIENT,AREA,CLEAN_LOSS,COOLANT_SPECIFIC_HEAT,COOLANT_MASS_FLOW,COOLANT_TEMPERATURE,CTRL_ID,&
-                DAMPER,DEVC_ID,DIAMETER,DISCHARGE_COEFFICIENT,DUCT_ID,&
+                DAMPER,DEBUG,DEVC_ID,DIAMETER,DISCHARGE_COEFFICIENT,DUCT_ID,&
                 EFFICIENCY,FAN_ID,FILTER_ID,FIXED_Q,ID,LEAK_ENTHALPY,LEAK_PRESSURE_EXPONENT,LEAK_REFERENCE_PRESSURE,&
                 LENGTH,LOADING,LOADING_MULTIPLIER,LOSS,&
-                MASS_FLOW,MAX_FLOW,MAX_PRESSURE,N_CELLS,NODE_ID,PERIMETER,&
-                RAMP_ID,RAMP_LOSS,REVERSE,ROUGHNESS,SPEC_ID,SURF_ID,TAU_AC,TAU_FAN,TAU_VF,TRANSPORT_PARTICLES,&
-                TYPE_ID,VENT_ID,VENT2_ID,VOLUME_FLOW,XYZ
+                MASS_FLOW,MAX_FLOW,MAX_PRESSURE,N_CELLS,NETWORK_ID,NODE_ID,PERIMETER,QUANTITY,QUANTITY_SPEC_ID,&
+                RAMP_ID,RAMP_LOSS,REVERSE,ROUGHNESS,SPEC_ID,TAU_AC,TAU_FAN,TAU_VF,TRANSPORT_PARTICLES,&
+                TYPE_ID,WAYPOINTS,VENT_ID,VENT2_ID,VOLUME_FLOW,XYZ
 
 TNOW=CURRENT_TIME()
 
@@ -145,7 +158,9 @@ REWIND(LU_INPUT) ; INPUT_FILE_LINE_NUMBER = 0
 COUNT_HVAC_LOOP: DO
    CALL CHECKREAD('HVAC',LU_INPUT,IOS)  ; IF (STOP_STATUS==SETUP_STOP) RETURN
    IF (IOS==1) EXIT COUNT_HVAC_LOOP
+   DEBUG = .FALSE.
    READ(LU_INPUT,HVAC,END=15,ERR=16,IOSTAT=IOS)
+   IF (DEBUG) HVAC_DEBUG = DEBUG
    N_HVAC_READ = N_HVAC_READ + 1
    16 IF (IOS>0) THEN
          WRITE(MESSAGE,'(A,I5,A,I5)') &
@@ -171,6 +186,8 @@ COUNT_HVAC_LOOP: DO
       CASE ('LEAK')
          N_DUCTS = N_DUCTS + 1
          N_DUCTNODES = N_DUCTNODES + 2
+      CASE ('DUCT QUANTITY LIST')         
+      CASE ('NODE QUANTITY LIST')         
       CASE DEFAULT
          WRITE(MESSAGE,'(A,I5,A,I5)') &
             'ERROR: Invalid TYPE_ID provided for HVAC line number ',N_HVAC_READ,', input line number',INPUT_FILE_LINE_NUMBER
@@ -300,6 +317,9 @@ DO NN=1,N_HVAC_READ
          DU%LENGTH = LENGTH
          DU%REVERSE = REVERSE
          DU%DP_FAN = 0._EB
+         ! Initializing to background/ambient for t=0 outputs
+         DU%RHO_D = RHOA
+         DU%TMP_D = TMPA
          ALLOCATE(DU%ZZ(N_TRACKED_SPECIES))
          DU%ZZ(1:N_TRACKED_SPECIES) = SPECIES_MIXTURE(1:N_TRACKED_SPECIES)%ZZ0
          ALLOCATE(DU%ZZ_OLD(N_TRACKED_SPECIES))
@@ -372,41 +392,29 @@ DO NN=1,N_HVAC_READ
          IF (N_CELLS > 0) THEN
             HVAC_MASS_TRANSPORT = .TRUE.
             DU%N_CELLS = N_CELLS
+         ENDIF
+
+         IF (ANY(WAYPOINTS > -HUGE(1._EB))) THEN
+            DU%N_WAYPOINTS = 0
+            DO NC=1,30
+               IF (ALL(WAYPOINTS(NC,:)>-HUGE(1._EB))) THEN
+                  DU%N_WAYPOINTS = DU%N_WAYPOINTS + 1
+               ELSE
+                  EXIT
+               ENDIF              
+            ENDDO
+            ALLOCATE(DU%WAYPOINT_XYZ(DU%N_WAYPOINTS,3))
+            DO NC=1,DU%N_WAYPOINTS
+               DU%WAYPOINT_XYZ(NC,:) = WAYPOINTS(NC,:)
+            ENDDO
+         ENDIF
+         
+         IF (NETWORK_ID=='null') THEN
+            DU%NETWORK_ID='Unassigned'
          ELSE
-            IF (HVAC_MASS_TRANSPORT_CELL_L > 0._EB) DU%N_CELLS = MAX(1,INT(DU%LENGTH/HVAC_MASS_TRANSPORT_CELL_L))
+            DU%NETWORK_ID=NETWORK_ID
          ENDIF
-         IF (DU%N_CELLS > 0) THEN
-            DU%DX = DU%LENGTH/DU%N_CELLS
-            ALLOCATE(DU%RHO_C(DU%N_CELLS))
-            ALLOCATE(DU%TMP_C(DU%N_CELLS))
-            ALLOCATE(DU%CP_C(DU%N_CELLS))
-            ALLOCATE(DU%ZZ_C(DU%N_CELLS,N_TRACKED_SPECIES))
-            DO NC = 1,DU%N_CELLS ! Initialising as background here; required for DEVC output at t = 0 s
-               DU%ZZ_C(NC,1:N_TRACKED_SPECIES) = SPECIES_MIXTURE(1:N_TRACKED_SPECIES)%ZZ0
-            ENDDO
-            ALLOCATE(DU%RHO_C_OLD(DU%N_CELLS))
-            ALLOCATE(DU%TMP_C_OLD(DU%N_CELLS))
-            ALLOCATE(DU%CP_C_OLD(DU%N_CELLS))
-            ALLOCATE(DU%ZZ_C_OLD(DU%N_CELLS,N_TRACKED_SPECIES))
-            DO NC = 1,DU%N_CELLS ! Initialising as background here; required for DEVC output at t = 0 s
-               DU%ZZ_C_OLD(NC,1:N_TRACKED_SPECIES) = SPECIES_MIXTURE(1:N_TRACKED_SPECIES)%ZZ0
-            ENDDO
-         ENDIF
-
-         IF (SURF_ID/='null') THEN
-            DUCT_HT = .TRUE.
-            SURF_LOOP: DO N= 1,N_SURF
-               IF (SURFACE(N)%ID==SURF_ID) THEN
-                  DU%SURF_INDEX = N
-                  EXIT SURF_LOOP
-               ENDIF
-            ENDDO SURF_LOOP
-            IF (DU%SURF_INDEX== -1) THEN
-               WRITE(MESSAGE,'(A,A)') 'ERROR: SURFACE not found for duct ID: ',TRIM(DU%ID)
-               CALL SHUTDOWN(MESSAGE); RETURN
-            ENDIF
-         ENDIF
-
+   
       CASE('NODE')
          I_DUCTNODE = I_DUCTNODE + 1
          NODE_DUCT_A(I_DUCTNODE,:) = DUCT_ID
@@ -428,6 +436,11 @@ DO NN=1,N_HVAC_READ
             CALL SHUTDOWN(MESSAGE); RETURN
          ENDIF
          DN%XYZ      = XYZ
+         IF (ALL(DN%XYZ>-1.E9) .OR. DN%VENT) DN%SPECIFIED_XYZ = .TRUE.
+         IF (.NOT. DN%VENT) THEN
+            IF (DN%XYZ(1) <=-1.E9_EB) DN%XYZ(1) = XS_MIN
+            IF (DN%XYZ(2) <=-1.E9_EB) DN%XYZ(2) = YS_MIN
+         ENDIF
          DN%AMBIENT  = AMBIENT
          DO ND = 1, MAX_DUCTS
             IF (NODE_DUCT_A(I_DUCTNODE,ND) == 'null') EXIT
@@ -459,6 +472,12 @@ DO NN=1,N_HVAC_READ
          ELSE
             DN%LOSS_ARRAY(1,2) = LOSS(1,1)
             DN%LOSS_ARRAY(2,1) = LOSS(2,1)
+         ENDIF
+
+         IF (NETWORK_ID=='null') THEN
+            DN%NETWORK_ID='Unassigned'
+         ELSE
+            DN%NETWORK_ID=NETWORK_ID
          ENDIF
 
       CASE('FAN')
@@ -564,6 +583,7 @@ DO NN=1,N_HVAC_READ
          ENDIF
          DN%VENT_ID = VENT_ID
          DN%VENT=.TRUE.
+         DN%NETWORK_ID='LEAK'
          DN%READ_IN = .FALSE.
          DN%TRANSPORT_PARTICLES = TRANSPORT_PARTICLES
          IF (TRIM(DN%VENT_ID)=='null') THEN
@@ -586,6 +606,7 @@ DO NN=1,N_HVAC_READ
          DN%ID = VENT2_ID
          DN%VENT_ID = VENT2_ID
          DN%VENT=.TRUE.
+         DN%NETWORK_ID='LEAK'
          DN%READ_IN = .FALSE.
          DN%TRANSPORT_PARTICLES = TRANSPORT_PARTICLES
          IF (TRIM(VENT2_ID)=='null') THEN
@@ -621,8 +642,13 @@ DO NN=1,N_HVAC_READ
          DU%DIAMETER = -1._EB
          DU%LENGTH = 0.1_EB
          DU%REVERSE = .FALSE.
+         ! Initializing to background/ambient for t=0 outputs
+         DU%RHO_D = RHOA
+         DU%TMP_D = TMPA
          ALLOCATE(DU%ZZ(N_TRACKED_SPECIES))
          DU%ZZ(1:N_TRACKED_SPECIES) = SPECIES_MIXTURE(1:N_TRACKED_SPECIES)%ZZ0
+         ALLOCATE(DU%ZZ_OLD(N_TRACKED_SPECIES))
+         DU%ZZ_OLD(1:N_TRACKED_SPECIES) = SPECIES_MIXTURE(1:N_TRACKED_SPECIES)%ZZ0
          IF (LOSS(1,1)==0._EB) LOSS(1,1)=1._EB
          DU%LOSS(1:2) = MAX(0._EB,LOSS(1,1))
          DU%DAMPER = .FALSE.
@@ -640,6 +666,39 @@ DO NN=1,N_HVAC_READ
          DU%LEAK_REFERENCE_PRESSURE = LEAK_REFERENCE_PRESSURE
          DU%LEAK_PRESSURE_EXPONENT = LEAK_PRESSURE_EXPONENT
          DU%DISCHARGE_COEFFICIENT = DISCHARGE_COEFFICIENT
+         DU%NETWORK_ID='LEAK'
+      CASE ('DUCT QUANTITY LIST')
+         IF (DUCT_QUANTITY_DEFINED) THEN
+            WRITE(MESSAGE,'(A,I5)') 'ERROR: Can only have one HVAC input with TYPE_ID of DUCT QUANTITY LIST. HVAC line number:',NN
+            CALL SHUTDOWN(MESSAGE); RETURN
+         ENDIF
+         DUCT_QUANTITY_DEFINED = .TRUE.
+         DO N=1,20
+            IF (QUANTITY(N)=='null') EXIT
+            N_DUCT_QUANTITY = N_DUCT_QUANTITY + 1
+         ENDDO
+         ALLOCATE (DUCT_QUANTITY_ARRAY(N_DUCT_QUANTITY))
+         DO N=1, N_DUCT_QUANTITY
+            HQT => DUCT_QUANTITY_ARRAY(N)
+            CALL GET_QUANTITY_INDEX(HQT%SMOKEVIEW_LABEL,HQT%SMOKEVIEW_BAR_LABEL,HQT%OUTPUT_INDEX,HQT%Y_INDEX,HQT%Z_INDEX,&
+               HQT%UNITS,QUANTITY(N),QUANTITY_SPEC_ID(N))            
+         ENDDO
+      CASE ('NODE QUANTITY LIST')
+         IF (NODE_QUANTITY_DEFINED) THEN
+            WRITE(MESSAGE,'(A,I5)') 'ERROR: Can only have one HVAC input with TYPE_ID of DUCT QUANTITY LIST. HVAC line number:',NN
+            CALL SHUTDOWN(MESSAGE); RETURN
+         ENDIF
+         NODE_QUANTITY_DEFINED = .TRUE.
+         DO N=1,20
+            IF (QUANTITY(N)=='null') EXIT
+            N_NODE_QUANTITY = N_NODE_QUANTITY + 1
+         ENDDO
+         ALLOCATE (NODE_QUANTITY_ARRAY(N_NODE_QUANTITY))
+         DO N=1, N_NODE_QUANTITY
+            HQT => NODE_QUANTITY_ARRAY(N)
+            CALL GET_QUANTITY_INDEX(HQT%SMOKEVIEW_LABEL,HQT%SMOKEVIEW_BAR_LABEL,HQT%OUTPUT_INDEX,HQT%Y_INDEX,HQT%Z_INDEX,&
+               HQT%UNITS,QUANTITY(N),QUANTITY_SPEC_ID(N))            
+         ENDDO
    END SELECT
 ENDDO
 
@@ -680,7 +739,7 @@ FILTER_ID    = 'null'
 LEAK_ENTHALPY = .FALSE.
 LEAK_PRESSURE_EXPONENT = 0.5_EB
 LEAK_REFERENCE_PRESSURE = 4._EB
-LENGTH       = 1._EB
+LENGTH       = -1._EB
 LOADING      = 0._EB
 LOADING_MULTIPLIER = 1._EB
 LOSS         = 0._EB
@@ -688,7 +747,10 @@ MASS_FLOW    = 1.E7_EB
 MAX_FLOW     = 1.E7_EB
 MAX_PRESSURE = 1.E7_EB
 N_CELLS      = -999
+NETWORK_ID   = 'null'
 NODE_ID      = 'null'
+QUANTITY = 'null'
+QUANTITY_SPEC_ID = 'null'
 INITIALIZED_HVAC_MASS_TRANSPORT=.FALSE.
 PERIMETER    = -1._EB
 RAMP_ID      = 'null'
@@ -698,7 +760,6 @@ ROUGHNESS    = -1._EB
 ROUND        = .TRUE.
 SPEC_ID      = 'null'
 SQUARE       = .FALSE.
-SURF_ID      = 'null'
 TYPE_ID      = 'null'
 TAU_AC       = TAU_DEFAULT
 TAU_FAN      = TAU_DEFAULT
@@ -707,6 +768,7 @@ TRANSPORT_PARTICLES = .FALSE.
 VENT_ID      = 'null'
 VENT2_ID     = 'null'
 VOLUME_FLOW  = 1.E7_EB
+WAYPOINTS    = -HUGE(1._EB)
 XYZ          = -1.E10_EB
 
 RETURN
@@ -1052,11 +1114,89 @@ DUCT%AREA_OLD = DUCT%AREA
 ALLOCATE(DUCT_MF(1:N_DUCTS))
 DUCT_MF = 0._EB
 
+CALL CONNECTION_CHECK
+
 T_USED(13)=T_USED(13)+CURRENT_TIME()-TNOW
 
 RETURN
 
 END SUBROUTINE PROC_HVAC
+
+
+!< \brief Finds all connected ducts and nodes and hence number of ductruns
+SUBROUTINE CONNECTION_CHECK
+INTEGER :: NN,NN3,ND
+LOGICAL :: NODE_CHECKED(N_DUCTNODES),NODE_CONNECTED(N_DUCTNODES)
+TYPE(DUCT_TYPE), POINTER :: DU=>NULL()
+TYPE(DUCTNODE_TYPE), POINTER :: DN=>NULL()
+
+NODE_CONNECTED=.FALSE.
+NODE_CHECKED=.FALSE.
+
+! Set leakage paths as already checked
+DO NN = 1, N_DUCTNODES
+   DN=>DUCTNODE(NN)
+   IF (DN%LEAKAGE .OR. DUCT(DN%DUCT_INDEX(1))%LOCALIZED_LEAKAGE) NODE_CHECKED(NN) = .TRUE.
+END DO
+
+N_CONNECTIVITY_INDICES = 1
+NN = 1
+L1:DO WHILE (NN <= N_DUCTNODES)
+   IF (NODE_CHECKED(NN)) THEN
+      NN = NN + 1
+      CYCLE L1
+   END IF
+   DN=>DUCTNODE(NN)
+   DL: DO ND = 1, DN%N_DUCTS
+      DU=>DUCT(DN%DUCT_INDEX(ND))
+      DUCT(DN%DUCT_INDEX(ND))%CONNECTIVITY_INDEX = N_CONNECTIVITY_INDICES
+      IF (DU%NODE_INDEX(1)==NN) THEN
+         DUCTNODE(DU%NODE_INDEX(2))%CONNECTIVITY_INDEX = N_CONNECTIVITY_INDICES
+         NODE_CONNECTED(DU%NODE_INDEX(2)) = .TRUE.
+         IF (DUCTNODE(DU%NODE_INDEX(2))%N_DUCTS==1) NODE_CHECKED(DU%NODE_INDEX(2)) = .TRUE.
+      ELSE
+         DUCTNODE(DU%NODE_INDEX(1))%CONNECTIVITY_INDEX = N_CONNECTIVITY_INDICES
+         NODE_CONNECTED(DU%NODE_INDEX(1)) = .TRUE.
+         IF (DUCTNODE(DU%NODE_INDEX(1))%N_DUCTS==1) NODE_CHECKED(DU%NODE_INDEX(1)) = .TRUE.
+      ENDIF
+   END DO DL
+
+   NODE_CHECKED(NN) = .TRUE.
+   DUCTNODE(NN)%CONNECTIVITY_INDEX = N_CONNECTIVITY_INDICES
+   NODE_CONNECTED(NN) = .TRUE.
+
+   IF (ALL(NODE_CHECKED)) EXIT L1
+   L2:DO NN3 = 1, N_DUCTNODES
+      IF (NODE_CHECKED(NN3)) THEN
+         CYCLE L2
+      ELSE IF ((.NOT. NODE_CHECKED(NN3)) .AND. NODE_CONNECTED(NN3)) THEN
+         ! If node attached to current node hasn't been checked yet, set the active node to that node
+         NN = NN3
+         EXIT L2
+      ELSE IF (NN3 == N_DUCTNODES) THEN
+         ! If there are no nodes part of the current network that haven't been checked, up the network and move to first unchecked
+         N_CONNECTIVITY_INDICES = N_CONNECTIVITY_INDICES + 1
+         NODE_CONNECTED = .FALSE.
+         NN = FINDLOC(NODE_CHECKED,.FALSE.,1)
+         EXIT L2
+      END IF
+   END DO L2
+END DO L1
+
+IF (ANY(DUCT%LOCALIZED_LEAKAGE)) THEN
+   N_CONNECTIVITY_INDICES = N_CONNECTIVITY_INDICES + 1
+   DO ND=1,N_DUCTS
+      DU=>DUCT(ND)
+      IF (.NOT. DU%LOCALIZED_LEAKAGE) CYCLE
+      DU%CONNECTIVITY_INDEX = N_CONNECTIVITY_INDICES
+      DUCTNODE(DU%NODE_INDEX(1))%CONNECTIVITY_INDEX = N_CONNECTIVITY_INDICES
+      DUCTNODE(DU%NODE_INDEX(2))%CONNECTIVITY_INDEX = N_CONNECTIVITY_INDICES
+      IF (DUCTNODE(DU%NODE_INDEX(2))%AMBIENT) DUCTNODE(DU%NODE_INDEX(2))%XYZ = DUCTNODE(DU%NODE_INDEX(1))%XYZ
+   ENDDO
+ENDIF
+
+END SUBROUTINE CONNECTION_CHECK
+
 
 !> \brief Initializes duct node properties for non-leakage ducts
 
@@ -1479,6 +1619,7 @@ HMT_IF: IF (HVAC_MASS_TRANSPORT) THEN
                   MTOT = MTOT + MFLOW * DU%AREA / DT_MT
                   ZZTOT = ZZTOT + ZZSUM * DU%AREA / DT_MT
                   TGUESS = TGUESS + MFLOW * DU%AREA / DT_MT * DU%TMP_D
+
                   IF (DN%FILTER_INDEX > 0) THEN
                      DN%HMT_FILTER = .TRUE.
                      DN%FILTER_LOADING(:,3) = ZZSUM * DU%AREA / DT_MT * FILTER(DN%FILTER_INDEX)%EFFICIENCY
@@ -1497,6 +1638,7 @@ HMT_IF: IF (HVAC_MASS_TRANSPORT) THEN
                ENDIF
 
                N_UPDATED(DR%NODE_INDEX(NN)) = .TRUE.
+               IF (MTOT==0._EB) CYCLE NODE_LOOP_1
                ZZ_GET = 0._EB
                DN%ZZ(:)  = ZZTOT/MTOT
                ZZ_GET(1:N_TRACKED_SPECIES) = DN%ZZ(1:N_TRACKED_SPECIES)
@@ -2076,7 +2218,7 @@ CONTAINS
 
 SUBROUTINE INITIALIZE_HVAC
 
-IF (SOLID(CELL_INDEX(BC%IIG,BC%JJG,BC%KKG))) RETURN
+IF (CELL(CELL_INDEX(BC%IIG,BC%JJG,BC%KKG))%SOLID) RETURN
 
 ZONE_LEAK_IF: IF (ALL(SF%LEAK_PATH < 0)) THEN
 
@@ -2342,10 +2484,9 @@ ENDDO NODE_LOOP
 
 END SUBROUTINE DETERMINE_FIXED_ELEMENTS
 
+
 !> \brief Determines what HVAC components lies in different, isolated networks (i.e. not sharing a common pressure zone)
-!>
-!> \param CHANGEIN Flag to force revaluation of the duct networks. Otherwise done only if there area damper changes.
-!> \param T Current time (s)
+!> \param CHANGE Flag to force revaluation of the duct networks. Otherwise done only if there area damper changes.
 !> \param T Current time (s)
 
 SUBROUTINE FIND_NETWORKS(CHANGE,T)
@@ -2948,8 +3089,10 @@ END SUBROUTINE COLLAPSE_HVAC_BC
 
 SUBROUTINE SET_INIT_HVAC
 REAL(EB) :: TNOW !< Current CPU time (s) used in computing length of time spent in HVAC routines.
-INTEGER:: NN
-TYPE(DUCTNODE_TYPE), POINTER :: DN=>NULL()
+REAL(EB) :: XYZ1(3), XYZ2(3)
+INTEGER:: ND,NN,NW,NC
+TYPE(DUCTNODE_TYPE), POINTER :: DN=>NULL(),DN2=>NULL()
+TYPE(DUCT_TYPE), POINTER :: DU=>NULL()
 
 TNOW = CURRENT_TIME()
 
@@ -2961,6 +3104,59 @@ DO NN=1,N_DUCTNODES
    DN%RHO = DN%RHO_V
    DN%RSUM = DN%RSUM_V
    DN%ZZ = DN%ZZ_V
+ENDDO
+
+DO ND=1,N_DUCTS
+   DU => DUCT(ND)
+   IF (DU%LENGTH < 0._EB) THEN
+      IF (.NOT. DUCTNODE(DU%NODE_INDEX(1))%SPECIFIED_XYZ .OR. .NOT. DUCTNODE(DU%NODE_INDEX(2))%SPECIFIED_XYZ) THEN
+         WRITE(MESSAGE,'(A,A)') 'ERROR: DUCT has no LENGTH and one NODE lacks an XYZ. Duct: ',TRIM(DU%ID)
+         CALL SHUTDOWN(MESSAGE); RETURN      
+      ENDIF
+      DN =>  DUCTNODE(DU%NODE_INDEX(1))
+      DN2 => DUCTNODE(DU%NODE_INDEX(2))
+      IF (DU%N_WAYPOINTS == 0) THEN
+         DU%LENGTH = SQRT((DN%XYZ(1)-DN2%XYZ(1))**2+(DN%XYZ(2)-DN2%XYZ(2))**2+(DN%XYZ(3)-DN2%XYZ(3))**2)
+      ELSE
+         DU%LENGTH = 0._EB
+         DO NW=1,DU%N_WAYPOINTS+1
+            IF (NW==1) THEN
+               XYZ1 = DN%XYZ
+            ELSE
+               XYZ1 = XYZ2
+            ENDIF
+            IF (NW==DU%N_WAYPOINTS+1) THEN
+               XYZ2 = DN2%XYZ
+            ELSE
+               XYZ2(:) = DU%WAYPOINT_XYZ(NW,:)
+            ENDIF
+            DU%LENGTH = DU%LENGTH + SQRT((XYZ1(1)-XYZ2(1))**2+(XYZ1(2)-XYZ2(2))**2+(XYZ1(3)-XYZ2(3))**2)
+         ENDDO
+      ENDIF
+   ENDIF
+   
+   IF (HVAC_MASS_TRANSPORT_CELL_L > 0._EB .AND. .NOT. (DU%LEAKAGE .OR. DU%LOCALIZED_LEAKAGE)) &
+      DU%N_CELLS = MAX(1,INT(DU%LENGTH/HVAC_MASS_TRANSPORT_CELL_L))
+   IF (DU%N_CELLS > 0) THEN
+      DU%DX = DU%LENGTH/DU%N_CELLS
+      ALLOCATE(DU%RHO_C(DU%N_CELLS))
+      ALLOCATE(DU%TMP_C(DU%N_CELLS))
+      ALLOCATE(DU%CP_C(DU%N_CELLS))
+      ALLOCATE(DU%ZZ_C(DU%N_CELLS,N_TRACKED_SPECIES))
+      ! Initialising as background/ambient here; required for DEVC output at t = 0 s
+      DU%RHO_C = RHOA
+      DU%TMP_C = TMPA
+      DO NC = 1,DU%N_CELLS 
+         DU%ZZ_C(NC,1:N_TRACKED_SPECIES) = SPECIES_MIXTURE(1:N_TRACKED_SPECIES)%ZZ0
+      ENDDO
+      ALLOCATE(DU%RHO_C_OLD(DU%N_CELLS))
+      ALLOCATE(DU%TMP_C_OLD(DU%N_CELLS))
+      ALLOCATE(DU%CP_C_OLD(DU%N_CELLS))
+      ALLOCATE(DU%ZZ_C_OLD(DU%N_CELLS,N_TRACKED_SPECIES))
+      DO NC = 1,DU%N_CELLS ! Initialising as background here; required for DEVC output at t = 0 s
+         DU%ZZ_C_OLD(NC,1:N_TRACKED_SPECIES) = SPECIES_MIXTURE(1:N_TRACKED_SPECIES)%ZZ0
+      ENDDO
+   ENDIF   
 ENDDO
 
 IF (N_ZONE>0) ALLOCATE(PSUM_TOT(N_ZONE))
@@ -3276,7 +3472,6 @@ REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: RHOZZ_C,ZZ_F
 DUCT_LOOP: DO ND = 1,DUCTRUN(NR)%N_DUCTS
    DU => DUCT(DUCTRUN(NR)%DUCT_INDEX(ND))
    IF (DU%N_CELLS == 0 ) CYCLE DUCT_LOOP
-
    ! Check for zero flow and zero area
    IF (ABS(DU%VEL(NEW))<=TWO_EPSILON_EB .OR. DU%AREA<=TWO_EPSILON_EB) CYCLE DUCT_LOOP
 
@@ -3496,7 +3691,7 @@ END SUBROUTINE SET_GUESS_QFAN
 !> \brief Does the analytic solution when a ductrun consists of only one duct.
 !>
 !> \param DUCTRUN_INDEX Index for the ductrun
-!> \param T Current time (s)
+!> \param T Current time (s)  
 
 SUBROUTINE QFAN_SIMPLE(DUCTRUN_INDEX,T)
 INTEGER, INTENT(IN) :: DUCTRUN_INDEX
@@ -3761,26 +3956,17 @@ DO NR = 1, N_DUCTRUNS
    ENDIF QFAN_IF
 ENDDO
 
-! If HVAC_MASS_TRANSPORT in a duct run make sure all ducts have at least one cell.
-DO NR = 1, N_DUCTRUNS
+DO NR=1,N_DUCTRUNS
    IF (.NOT. MT_PRESENT(NR)) CYCLE
-   DO ND = 1,DUCTRUN(NR)%N_DUCTS
+   DO ND=1,DUCTRUN(NR)%N_DUCTS
       IF (DUCT(DUCTRUN(NR)%DUCT_INDEX(ND))%N_CELLS==0) THEN
-         WRITE(MESSAGE,'(A,A,A)') 'ERROR: DUCT ',TRIM(DUCT(DUCTRUN(NR)%DUCT_INDEX(ND))%ID), &
-            'has N_CELLS=0 and is in a ductrun with ducts that have N_CELLS>0'
-         CALL SHUTDOWN(MESSAGE); RETURN
+         WRITE(MESSAGE,'(A,A,A)') &
+            'ERROR: Duct ',TRIM(DUCT(DUCTRUN(NR)%DUCT_INDEX(ND))%ID),&
+            ' has N_CELLS=0 and is in a duct run with ducts that have N_CELLS>0.'
+         CALL SHUTDOWN(MESSAGE); RETURN         
       ENDIF
    ENDDO
 ENDDO
-
-!DO NR=1,N_DUCTRUNS
-!   WRITE(*,*) 'DR:',NR,DUCTRUN(NR)%N_DUCTS,DUCTRUN(NR)%N_M_DUCTS,DUCTRUN(NR)%N_DUCTNODES,&
-!      DUCTRUN(NR)%N_M_DUCTNODES,DUCTRUN(NR)%N_DUCTS,DUCTRUN(NR)%N_QFANS
-!   WRITE(*,*) 'DI',DUCTRUN(NR)%DUCT_INDEX
-!   WRITE(*,*) 'NI',DUCTRUN(NR)%NODE_INDEX
-!   IF (DUCTRUN(NR)%N_M_DUCTS>0) WRITE(*,*) 'DMI',DUCTRUN(NR)%DUCT_M_INDEX
-!   IF (DUCTRUN(NR)%N_M_DUCTNODES>0) WRITE(*,*) 'NMI',DUCTRUN(NR)%NODE_M_INDEX
-!ENDDO
 
 END SUBROUTINE FIND_DUCTRUNS
 
@@ -3804,10 +3990,9 @@ DR%P(1:DR%N_M_DUCTNODES,NF,NEW) = RHS(DR%N_M_DUCTS+1:DR%N_M_DUCTS+DR%N_M_DUCTNOD
 
 END SUBROUTINE MATRIX_SOLVE_QFAN
 
+
 !> \brief Builds the right hand side of the HVAC QFAN matrix for mass conservation at internal nodes
-!>
 !> \param DUCTRUN_INDEX Index indicating which HVAC ductrun is being solved
-!> \param NF Index indicating which ductrun fan is being solved
 
 SUBROUTINE RHSNODE_QFAN(DUCTRUN_INDEX)
 USE GLOBAL_CONSTANTS
@@ -3854,10 +4039,11 @@ ENDDO
 
 END SUBROUTINE LHSNODE_QFAN
 
+
 !> \brief Builds the right hand side of the HVAC QFAN flow matrix for momentum conservation in a duct
-!>
 !> \param DUCTRUN_INDEX Index indicating which HVAC ductrun is being solved
 !> \param NF Index indicating which ductrun fan is being solved
+!> \param T Current time (s)
 
 SUBROUTINE RHSDUCT_QFAN(DUCTRUN_INDEX,NF,T)
 
@@ -4060,10 +4246,9 @@ END DO COIL_LOOP
 
 END SUBROUTINE COIL_UPDATE_QFAN
 
+
 !> \brief Determines wall friction loss and assigns node losses to ducts
-!>
 !> \param T Current time (s)
-!> \param DT Current time step (s)
 !> \param DUCTRUN_INDEX Index indicating which HVAC ductrun is being solved
 !> \param NF Index indicating which HVAC ductrun dan is being solved
 
@@ -4466,4 +4651,79 @@ ENDDO ITER_LOOP
 END SUBROUTINE HVAC_UPDATE_QFAN
 
 
+!> \brief Define the index and other properties of output quantities
+
+SUBROUTINE GET_QUANTITY_INDEX(SMOKEVIEW_LABEL,SMOKEVIEW_BAR_LABEL,OUTPUT_INDEX,Y_INDEX,Z_INDEX,UNITS,QUANTITY,SPEC_ID)
+USE MISC_FUNCTIONS, ONLY: GET_SPEC_OR_SMIX_INDEX
+USE OUTPUT_DATA
+CHARACTER(*), INTENT(INOUT) :: QUANTITY
+CHARACTER(*), INTENT(OUT) :: SMOKEVIEW_LABEL,SMOKEVIEW_BAR_LABEL,UNITS
+CHARACTER(*), INTENT(IN) :: SPEC_ID
+INTEGER, INTENT(OUT) :: OUTPUT_INDEX,Y_INDEX,Z_INDEX
+
+INTEGER :: ND
+
+! Initialize indices
+
+Y_INDEX = -1
+Z_INDEX = -1
+
+! Look for the appropriate SPEC or SMIX index
+
+IF (SPEC_ID/='null') THEN
+   CALL GET_SPEC_OR_SMIX_INDEX(SPEC_ID,Y_INDEX,Z_INDEX)
+   IF (Z_INDEX>=0  .AND. Y_INDEX>=1) Z_INDEX=-999
+   IF (Z_INDEX<0 .AND. Y_INDEX<1) THEN
+      WRITE(MESSAGE,'(A,A,A,A)')  'ERROR: SPEC_ID ',TRIM(SPEC_ID),' is not explicitly specified for QUANTITY ',TRIM(QUANTITY)
+      CALL SHUTDOWN(MESSAGE) ; RETURN
+   ENDIF
+ENDIF
+
+QUANTITY_INDEX_LOOP: DO ND=-N_OUTPUT_QUANTITIES,N_OUTPUT_QUANTITIES
+
+   QUANTITY_IF:IF (QUANTITY==OUTPUT_QUANTITY(ND)%NAME) THEN
+
+      OUTPUT_INDEX = ND
+
+      IF (OUTPUT_QUANTITY(ND)%SPEC_ID_REQUIRED .AND. (Y_INDEX<1 .AND. Z_INDEX<0)) THEN
+         IF (SPEC_ID=='null') THEN
+            WRITE(MESSAGE,'(3A)')  'ERROR: Output QUANTITY ',TRIM(QUANTITY),' requires a SPEC_ID'
+         ELSE
+            WRITE(MESSAGE,'(5A)')  'ERROR: Output QUANTITY ',TRIM(QUANTITY),'. SPEC_ID ',TRIM(SPEC_ID),' not found.'
+         ENDIF
+         CALL SHUTDOWN(MESSAGE) ; RETURN
+      ENDIF
+
+      IF (.NOT. OUTPUT_QUANTITY(ND)%HVAC_SMV) THEN
+         WRITE(MESSAGE,'(5A)') 'ERROR: HVAC_SMV_QUANTITY ',TRIM(QUANTITY), ' not appropriate for .hvac file.'
+         CALL SHUTDOWN(MESSAGE) ; RETURN
+      ENDIF
+
+      ! Assign Smokeview Label
+
+      IF (Z_INDEX>=0) THEN
+         SMOKEVIEW_LABEL = TRIM(SPECIES_MIXTURE(Z_INDEX)%ID)//' '//TRIM(QUANTITY)
+         SMOKEVIEW_BAR_LABEL = TRIM(OUTPUT_QUANTITY(ND)%SHORT_NAME)//'_'//TRIM(SPECIES_MIXTURE(Z_INDEX)%ID)
+      ELSEIF (Y_INDEX>0) THEN
+         SMOKEVIEW_LABEL = TRIM(SPECIES(Y_INDEX)%ID)//' '//TRIM(QUANTITY)
+         SMOKEVIEW_BAR_LABEL = TRIM(OUTPUT_QUANTITY(ND)%SHORT_NAME)//'_'//TRIM(SPECIES(Y_INDEX)%FORMULA)
+      ELSE
+         SMOKEVIEW_LABEL = TRIM(QUANTITY)
+         SMOKEVIEW_BAR_LABEL = TRIM(OUTPUT_QUANTITY(ND)%SHORT_NAME)
+      ENDIF
+
+      UNITS = TRIM(OUTPUT_QUANTITY(ND)%UNITS)
+      
+      RETURN
+   ENDIF QUANTITY_IF
+
+ENDDO QUANTITY_INDEX_LOOP
+
+! If no match for desired QUANTITY is found, stop the job
+
+WRITE(MESSAGE,'(3A)') 'ERROR: HVAC SMV QUANTITY ',TRIM(QUANTITY), ' not found'
+CALL SHUTDOWN(MESSAGE) ; RETURN
+
+END SUBROUTINE GET_QUANTITY_INDEX
+   
 END MODULE HVAC_ROUTINES

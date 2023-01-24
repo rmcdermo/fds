@@ -7,6 +7,10 @@ PROCESS()
   cd $case
   nout=`ls -l Current_Results/*.out |& grep -v cannot | wc -l`
   nfds=`ls -l Current_Results/*.fds |& grep -v cannot | wc -l`
+  ncfds=`ls -l Current_Results/*cat.fds |& grep -v cannot | wc -l`
+  if [ $ncfds -gt 0 ] ; then
+    nfds=$ncfds
+  fi
   nsuccess=`tail Current_Results/*.out |& grep successfully | wc -l`
   status="***error: $case cases not run"
   if [ $nfds -gt 0 ] && [ $nfds -gt $nout ]; then
@@ -47,6 +51,7 @@ PROCESS BRE_Spray
 PROCESS Bryant_Doorway
 PROCESS CAROLFIRE
 PROCESS Casara_Arts_Ribbed_Channel
+PROCESS Convection
 PROCESS Crown_Fires
 PROCESS CSIRO_Grassland_Fires
 PROCESS CSTB_Tunnel
@@ -67,7 +72,7 @@ PROCESS Harrison_Spill_Plumes
 PROCESS Heated_Channel_Flow
 PROCESS Heskestad_Flame_Height
 PROCESS Insulation_Materials
-PROCESS JH_FDS
+PROCESS JH_FRA
 PROCESS Juelich_SETCOM
 PROCESS LEMTA_Spray
 PROCESS LLNL_Enclosure
@@ -125,7 +130,6 @@ PROCESS USFS_Catchpole
 PROCESS USFS_Corsica
 PROCESS USN_Hangars
 PROCESS UWO_Wind_Tunnel
-PROCESS Vegetation
 PROCESS Vettori_Flat_Ceiling
 PROCESS Vettori_Sloped_Ceiling
 PROCESS VTT

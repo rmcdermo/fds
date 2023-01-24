@@ -412,8 +412,8 @@ DO K=0,KBP1
       DO I=0,IBAR
          IC = CELL_INDEX(I,J,K)
          IF (IC==0) CYCLE
-         V_EDGE_X(IC) = 0.5_EB*(V(I,J,K)+V(I+1,J,K))
-         W_EDGE_X(IC) = 0.5_EB*(W(I,J,K)+W(I+1,J,K))
+         CELL(IC)%V_EDGE_X = 0.5_EB*(V(I,J,K)+V(I+1,J,K))
+         CELL(IC)%W_EDGE_X = 0.5_EB*(W(I,J,K)+W(I+1,J,K))
       ENDDO
    ENDDO
 ENDDO
@@ -423,8 +423,8 @@ DO K=0,KBP1
       DO I=0,IBP1
          IC = CELL_INDEX(I,J,K)
          IF (IC==0) CYCLE
-         U_EDGE_Y(IC) = 0.5_EB*(U(I,J,K)+U(I,J+1,K))
-         W_EDGE_Y(IC) = 0.5_EB*(W(I,J,K)+W(I,J+1,K))
+         CELL(IC)%U_EDGE_Y = 0.5_EB*(U(I,J,K)+U(I,J+1,K))
+         CELL(IC)%W_EDGE_Y = 0.5_EB*(W(I,J,K)+W(I,J+1,K))
       ENDDO
    ENDDO
 ENDDO
@@ -434,8 +434,8 @@ DO K=0,KBAR
       DO I=0,IBP1
          IC = CELL_INDEX(I,J,K)
          IF (IC==0) CYCLE
-         U_EDGE_Z(IC) = 0.5_EB*(U(I,J,K)+U(I,J,K+1))
-         V_EDGE_Z(IC) = 0.5_EB*(V(I,J,K)+V(I,J,K+1))
+         CELL(IC)%U_EDGE_Z = 0.5_EB*(U(I,J,K)+U(I,J,K+1))
+         CELL(IC)%V_EDGE_Z = 0.5_EB*(V(I,J,K)+V(I,J,K+1))
       ENDDO
    ENDDO
 ENDDO
@@ -1361,9 +1361,12 @@ END SUBROUTINE NATURAL_CONVECTION_MODEL
 !> \param RE Reynolds number
 !> \param PR_ONTH_IN Prandtl number to the 1/3 power
 !> \param SURF_GEOMETRY_INDEX Indicator of the surface geometry
+!> \param NUSSELT_C0 Constant in Nusselt number correlation
+!> \param NUSSELT_C1 Constant in Nusselt number correlation
+!> \param NUSSELT_C2 Constant in Nusselt number correlation
+!> \param NUSSELT_M Exponent in Nusselt number correlation
 
-SUBROUTINE FORCED_CONVECTION_MODEL(NUSSELT,RE,PR_ONTH_IN,SURF_GEOMETRY_INDEX,&
-   NUSSELT_C0,NUSSELT_C1,NUSSELT_C2,NUSSELT_M)
+SUBROUTINE FORCED_CONVECTION_MODEL(NUSSELT,RE,PR_ONTH_IN,SURF_GEOMETRY_INDEX,NUSSELT_C0,NUSSELT_C1,NUSSELT_C2,NUSSELT_M)
 
 REAL(EB), INTENT(OUT) :: NUSSELT
 REAL(EB), INTENT(IN) :: RE,PR_ONTH_IN
@@ -1376,7 +1379,7 @@ IF (PRESENT(NUSSELT_C0)) THEN ! User has defined a custom Nusselt correlation
 ELSE
    SELECT CASE(SURF_GEOMETRY_INDEX)
       CASE (SURF_CARTESIAN)
-         NUSSELT = (0.037_EB*RE**0.8_EB-871._EB)*PR_ONTH_IN  ! Incropera and DeWitt, 7th, Table 7.7
+         NUSSELT = 0.0296_EB*RE**0.8_EB*PR_ONTH_IN  ! Incropera and DeWitt, 7th, Eq. 7.36, Table 7.7
       CASE (SURF_CYLINDRICAL)
          ! Incropera and DeWitt, 7th, Eq. 7.52
          IF (RE >= 40000._EB) THEN
@@ -1936,12 +1939,12 @@ VENT_LOOP: DO NV=1,N_VENT
    SF => SURFACE(VT%SURF_INDEX)
 
    IF ( .NOT. (VT%BOUNDARY_TYPE==OPEN_BOUNDARY .AND. OPEN_WIND_BOUNDARY)) THEN
-      IF (ABS(SF%T_IGN-T_BEGIN)<=SPACING(SF%T_IGN) .AND. SF%RAMP_INDEX(TIME_VELO)>=1) THEN
+      IF (ABS(SF%T_IGN-T_BEGIN)<=SPACING(SF%T_IGN) .AND. SF%RAMP(TIME_VELO)%INDEX>=1) THEN
          TSI = T
       ELSE
          TSI=T-SF%T_IGN
       ENDIF
-      RAMP_T = EVALUATE_RAMP(TSI,SF%RAMP_INDEX(TIME_VELO),TAU=SF%TAU(TIME_VELO))
+      RAMP_T = EVALUATE_RAMP(TSI,SF%RAMP(TIME_VELO)%INDEX,TAU=SF%RAMP(TIME_VELO)%TAU)
       VEL_NORMAL = SF%VEL     *RAMP_T
       VEL_TANG_1 = SF%VEL_T(1)*RAMP_T
       VEL_TANG_2 = SF%VEL_T(2)*RAMP_T
@@ -1961,8 +1964,8 @@ VENT_LOOP: DO NV=1,N_VENT
                VEL_NORMAL = -(U_WIND(KK)*(1.0-Z_WGT)+U_WIND(KK+1)*Z_WGT)
                VEL_TANG_1 = (V_WIND(KK)*(1.0-Z_WGT)+V_WIND(KK+1)*Z_WGT)
                VEL_TANG_2 = (W_WIND(KK)*(1.0-Z_WGT)+W_WIND(KK+1)*Z_WGT)
-            ELSEIF (SF%RAMP_INDEX(VELO_PROF_Z)>0) THEN
-               PROFILE_FACTOR = EVALUATE_RAMP(VT%Z_EDDY(NE),SF%RAMP_INDEX(VELO_PROF_Z))
+            ELSEIF (SF%RAMP(VELO_PROF_Z)%INDEX>0) THEN
+               PROFILE_FACTOR = EVALUATE_RAMP(VT%Z_EDDY(NE),SF%RAMP(VELO_PROF_Z)%INDEX)
             ENDIF
 
             VT%X_EDDY(NE) = VT%X_EDDY(NE) - DT*VEL_NORMAL*PROFILE_FACTOR*SIGN(1._EB,REAL(VT%IOR,EB))
@@ -2005,8 +2008,8 @@ VENT_LOOP: DO NV=1,N_VENT
                VEL_TANG_1 = (U_WIND(KK)*(1.0-Z_WGT)+U_WIND(KK+1)*Z_WGT)
                VEL_NORMAL = -(V_WIND(KK)*(1.0-Z_WGT)+V_WIND(KK+1)*Z_WGT)
                VEL_TANG_2 = (W_WIND(KK)*(1.0-Z_WGT)+W_WIND(KK+1)*Z_WGT)
-            ELSEIF (SF%RAMP_INDEX(VELO_PROF_Z)>0) THEN 
-               PROFILE_FACTOR = EVALUATE_RAMP(VT%Z_EDDY(NE),SF%RAMP_INDEX(VELO_PROF_Z))
+            ELSEIF (SF%RAMP(VELO_PROF_Z)%INDEX>0) THEN 
+               PROFILE_FACTOR = EVALUATE_RAMP(VT%Z_EDDY(NE),SF%RAMP(VELO_PROF_Z)%INDEX)
             ENDIF
 
             VT%X_EDDY(NE) = VT%X_EDDY(NE) + DT*VEL_TANG_1*PROFILE_FACTOR
@@ -2049,8 +2052,8 @@ VENT_LOOP: DO NV=1,N_VENT
                VEL_TANG_1 = (U_WIND(KK)*(1.0-Z_WGT)+U_WIND(KK+1)*Z_WGT)
                VEL_TANG_2 = (V_WIND(KK)*(1.0-Z_WGT)+V_WIND(KK+1)*Z_WGT)
                VEL_NORMAL = -(W_WIND(KK)*(1.0-Z_WGT)+W_WIND(KK+1)*Z_WGT)
-            ELSEIF (SF%RAMP_INDEX(VELO_PROF_Z)>0) THEN
-               PROFILE_FACTOR = EVALUATE_RAMP(VT%Z_EDDY(NE),SF%RAMP_INDEX(VELO_PROF_Z))
+            ELSEIF (SF%RAMP(VELO_PROF_Z)%INDEX>0) THEN
+               PROFILE_FACTOR = EVALUATE_RAMP(VT%Z_EDDY(NE),SF%RAMP(VELO_PROF_Z)%INDEX)
             ENDIF
             
             VT%X_EDDY(NE) = VT%X_EDDY(NE) + DT*VEL_TANG_1*PROFILE_FACTOR

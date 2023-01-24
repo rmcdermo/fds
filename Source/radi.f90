@@ -2790,11 +2790,11 @@ USE COMP_FUNCTIONS, ONLY: SHUTDOWN
 USE MIEV
 USE RADCAL_CALC
 USE WSGG_ARRAYS
-REAL(EB) :: THETAUP,THETALOW,PHIUP,PHILOW,F_THETA,PLANCK_C2,KSI,LT,RCRHO,YY,YY2,BBF,AP0,AMEAN,RADIANCE,TRANSMISSIVITY,X_N2,NRM
-INTEGER  :: N,I,J,K,IPC,IZERO,NN,NI,II,JJ,IIM,JJM,IBND,NS,NS2,NRA,NSB,RADCAL_TEMP(16)=0,RCT_SKIP=-1,OR_IN,I1,I2,NM,NSTEPS,IO
+REAL(EB) :: THETAUP,THETALOW,PHIUP,PHILOW,F_THETA,PLANCK_C2,KSI,LT,RCRHO,YY,YY2,BBF,AP0,AMEAN,RADIANCE,TRANSMISSIVITY,X_N2
+INTEGER  :: N,I,J,K,IPC,IZERO,NN,NI,II,JJ,IIM,JJM,IBND,NS,NS2,NRA,NSB,RADCAL_TEMP(16)=0,RCT_SKIP=-1,OR_IN,I1,I2,IO
 TYPE (LAGRANGIAN_PARTICLE_CLASS_TYPE), POINTER :: LPC
-TYPE (RAD_FILE_TYPE), POINTER :: RF
 REAL(EB), ALLOCATABLE, DIMENSION(:) :: COSINE_ARRAY
+TYPE (RAD_FILE_TYPE), POINTER :: RF
 
 ! A few miscellaneous constants
 
@@ -3407,48 +3407,11 @@ IF (SOLID_PARTICLES) THEN
 
 ENDIF
 
-! Initialize radiation file (RADF)
+! Allocate array needed by angle-specific RADF output files
 
-DO NM=1,NMESHES
-
-   IF (MY_RANK/=PROCESS(NM)) CYCLE
-
-   CALL POINT_TO_MESH(NM)
-
-   DO N=1,N_RADF
-      RF => RAD_FILE(N)
-      ALLOCATE(RF%IL_SAVE(RF%I1:RF%I2,RF%J1:RF%J2,RF%K1:RF%K2,NUMBER_RADIATION_ANGLES))
-      IF (.NOT.APPEND) THEN
-         OPEN(LU_RADF(N,NM),FILE=FN_RADF(N,NM),FORM='FORMATTED',STATUS='REPLACE')
-         WRITE(LU_RADF(N,NM),'(A)') 'NSTEPS'
-         NSTEPS = SIZE(RADF_CLOCK)
-         WRITE(LU_RADF(N,NM),'(I4)') NSTEPS
-         WRITE(LU_RADF(N,NM),'(/A)') 'TIMES'
-         DO NN=0,NSTEPS-1
-            WRITE(LU_RADF(N,NM),'(F8.2)') RADF_CLOCK(NN)
-         ENDDO
-         WRITE(LU_RADF(N,NM),'(/A)') 'NP'
-         WRITE(LU_RADF(N,NM),'(I8)') RF%N_POINTS
-         WRITE(LU_RADF(N,NM),'(/A)') 'XYZ_INTENSITIES'
-         DO K=RF%K1,RF%K2,RF%K_STEP
-            DO J=RF%J1,RF%J2,RF%J_STEP
-               DO I=RF%I1,RF%I2,RF%I_STEP
-                  WRITE(LU_RADF(N,NM),'(3F8.3)') XC(I),YC(J),ZC(K)
-               ENDDO
-            ENDDO
-         ENDDO
-         WRITE(LU_RADF(N,NM),'(/A)') 'NI'
-         WRITE(LU_RADF(N,NM),'(I4)') NUMBER_RADIATION_ANGLES
-         WRITE(LU_RADF(N,NM),'(/A)') 'XYZ_DIRECTIONS'
-         DO NN=1,NRA
-            NRM = NORM2([DLX(NN),DLY(NN),DLZ(NN)])
-            WRITE(LU_RADF(N,NM),'(3F7.3)') DLX(NN)/NRM,DLY(NN)/NRM,DLZ(NN)/NRM
-         ENDDO
-      ELSE
-         OPEN(LU_RADF(N,NM),FILE=FN_RADF(N,NM),FORM='FORMATTED',STATUS='OLD',POSITION='APPEND')
-      ENDIF
-   ENDDO
-
+DO N=1,N_RADF
+   RF => RAD_FILE(N)
+   ALLOCATE(RF%IL_SAVE(RF%I1:RF%I2,RF%J1:RF%J2,RF%K1:RF%K2,NUMBER_RADIATION_ANGLES))
 ENDDO
 
 END SUBROUTINE INIT_RADIATION
@@ -3467,7 +3430,7 @@ USE COMPLEX_GEOMETRY
 REAL(EB), INTENT(IN) :: T
 INTEGER, INTENT(IN) :: NM,RAD_ITER
 REAL(EB), POINTER, DIMENSION(:,:,:) :: KFST4_GAS
-REAL(EB) :: TNOW,EPS_SIGMA_TMP4
+REAL(EB) :: TNOW
 
 TNOW=CURRENT_TIME()
 
@@ -3494,7 +3457,7 @@ SUBROUTINE RADIATION_FVM
 USE MIEV
 USE MATH_FUNCTIONS, ONLY : INTERPOLATE1D
 USE TRAN, ONLY : GET_IJK
-USE COMPLEX_GEOMETRY, ONLY : IBM_IDRA,IBM_CGSC,IBM_SOLID
+USE COMPLEX_GEOMETRY, ONLY : CC_IDRA,CC_CGSC,CC_SOLID
 USE PHYSICAL_FUNCTIONS, ONLY : GET_VOLUME_FRACTION, GET_MASS_FRACTION
 REAL(EB) :: RAP, AX, AXU, AXD, AY, AYU, AYD, AZ, VC, RU, RD, RP, &
             ILXU, ILYU, ILZU, QVAL, BBF, BBFA, NCSDROP, RSA_RAT,EFLUX,SOOT_MASS_FRACTION, &
@@ -3592,7 +3555,6 @@ IF (UPDATE_INTENSITY) THEN
       ONE_D => BOUNDARY_ONE_D(WC%OD_INDEX)
       ONE_D%Q_RAD_IN = 0._EB
       SF  => SURFACE(WALL(IW)%SURF_INDEX)
-      IF (.NOT.SF%INTERNAL_RADIATION) ONE_D%Q_RAD_OUT = 0._EB
    ENDDO
    DO IP=1,NLP
       LP => LAGRANGIAN_PARTICLE(IP)
@@ -3606,7 +3568,6 @@ IF (UPDATE_INTENSITY) THEN
       ONE_D => BOUNDARY_ONE_D(CFA%OD_INDEX)
       ONE_D%Q_RAD_IN = 0._EB
       SF  => SURFACE(CFA%SURF_INDEX)
-      IF (.NOT.SF%INTERNAL_RADIATION) ONE_D%Q_RAD_OUT = 0._EB
    ENDDO
 ENDIF
 
@@ -3662,7 +3623,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          DO K=1,KBAR
             DO J=1,JBAR
                DO I=1,IBAR
-                  IF (SOLID(CELL_INDEX(I,J,K))) CYCLE
+                  IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                   IF (ABS(AVG_DROP_AREA(I,J,K,ARRAY_INDEX))<TWO_EPSILON_EB) CYCLE
                   NCSDROP = AVG_DROP_AREA(I,J,K,ARRAY_INDEX)
                   CALL INTERPOLATE1D(LPC%R50,LPC%WQABS(:,IBND),AVG_DROP_RAD(I,J,K,ARRAY_INDEX),QVAL)
@@ -3709,7 +3670,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
       DO K=1,KBAR
          DO J=1,JBAR
             DO I=1,IBAR
-               IF (SOLID(CELL_INDEX(I,J,K))) CYCLE
+               IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                ZZ_GET(1:N_TRACKED_SPECIES) = ZZ(I,J,K,1:N_TRACKED_SPECIES)
                KAPPA_GAS(I,J,K) = GET_KAPPA(ZZ_GET,TMP(I,J,K),IBND)
             ENDDO
@@ -3729,7 +3690,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
       DO K=1,KBAR
          DO J=1,JBAR
             DO I=1,IBAR
-               IF (SOLID(CELL_INDEX(I,J,K))) CYCLE
+               IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                BBF = BLACKBODY_FRACTION(WL_LOW(IBND),WL_HIGH(IBND),TMP(I,J,K))
                KFST4_GAS(I,J,K) = BBF*KAPPA_GAS(I,J,K)*FOUR_SIGMA*TMP(I,J,K)**4
             ENDDO
@@ -3741,7 +3702,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
       DO K=1,KBAR
          DO J=1,JBAR
             DO I=1,IBAR
-               IF (SOLID(CELL_INDEX(I,J,K))) CYCLE
+               IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                Z_ARRAY(1:N_TRACKED_SPECIES) = ZZ(I,J,K,1:N_TRACKED_SPECIES)                  ! Mass frac of the tracked species
                R_MIXTURE = RSUM(I,J,K)                                                       ! Specific gas constant of the mixture
                X_H2O = GET_VOLUME_FRACTION(H2O_INDEX,Z_ARRAY,R_MIXTURE)
@@ -3770,7 +3731,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
       DO K=1,KBAR
          DO J=1,JBAR
             DO I=1,IBAR
-               IF (SOLID(CELL_INDEX(I,J,K))) CYCLE
+               IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                IF (CHI_R(I,J,K)*Q(I,J,K)>QR_CLIP) KFST4_GAS(I,J,K) = KFST4_GAS(I,J,K)*RTE_SOURCE_CORRECTION_FACTOR
             ENDDO
          ENDDO
@@ -3793,7 +3754,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          DO K=1,KBAR
             DO J=1,JBAR
                DO I=1,IBAR
-                  IF (SOLID(CELL_INDEX(I,J,K))) CYCLE
+                  IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                   KFST4_GAS(I,J,K) = KAPPA_GAS(I,J,K)*FOUR_SIGMA*TMP(I,J,K)**4
                   IF (CHI_R(I,J,K)*Q(I,J,K)>QR_CLIP) THEN
                      VOL = R(I)*DX(I)*DY(J)*DZ(K)
@@ -3816,7 +3777,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          DO K=1,KBAR
             DO J=1,JBAR
                DO I=1,IBAR
-                  IF (SOLID(CELL_INDEX(I,J,K))) CYCLE
+                  IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                   IF (CHI_R(I,J,K)*Q(I,J,K)>QR_CLIP) KFST4_GAS(I,J,K) = KFST4_GAS(I,J,K)*RTE_SOURCE_CORRECTION_FACTOR
                ENDDO
             ENDDO
@@ -3832,7 +3793,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          DO K=1,KBAR
             DO J=1,JBAR
                DO I=1,IBAR
-                  IF (SOLID(CELL_INDEX(I,J,K))) CYCLE
+                  IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                   KFST4_GAS(I,J,K) = CHI_R(I,J,K)*Q(I,J,K)+KAPPA_GAS(I,J,K)*UII(I,J,K)
                ENDDO
             ENDDO
@@ -3861,7 +3822,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          DO K=1,KBAR
             DO J=1,JBAR
                DO I=1,IBAR
-                  IF (SOLID(CELL_INDEX(I,J,K))) CYCLE
+                  IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                   IF (ZZ(I,J,K,N) < TWO_EPSILON_EB) CYCLE
                   NCSDROP = 1.5_EB*ZZ(I,J,K,N)*RHO(I,J,K)/ &
                             (SPECIES(SPECIES_MIXTURE(N)%SINGLE_SPEC_INDEX)%DENSITY_LIQUID*SPECIES_MIXTURE(N)%MEAN_DIAMETER)
@@ -3917,13 +3878,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                BBF = A_WSGG(ONE_D%TMP_F,MOL_RAT,IBND) ! Temperature coefficient for the jth gray gas in the boundary
             ENDIF                                     ! (use information of the cell adjacent to the boundary)
             SF  => SURFACE(WC%SURF_INDEX)
-            IF (SF%INTERNAL_RADIATION) THEN
-               OUTRAD_W(IW) = BBF*RPI*ONE_D%Q_RAD_OUT
-            ELSE
-               EPS_SIGMA_TMP4 = ONE_D%EMISSIVITY*SIGMA*ONE_D%TMP_F**4
-               ONE_D%Q_RAD_OUT = ONE_D%Q_RAD_OUT + BBF*EPS_SIGMA_TMP4
-               OUTRAD_W(IW) = BBF*RPI*EPS_SIGMA_TMP4
-            ENDIF
+            OUTRAD_W(IW) = BBF*RPI*ONE_D%Q_RAD_OUT
          ENDIF
       ENDDO
 
@@ -3934,13 +3889,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          BC    => BOUNDARY_COORD(CFA%BC_INDEX)
          IF (WIDE_BAND_MODEL) BBF = BLACKBODY_FRACTION(WL_LOW(IBND),WL_HIGH(IBND),ONE_D%TMP_F)
          SF => SURFACE(CFA%SURF_INDEX)
-         IF (SF%INTERNAL_RADIATION) THEN
-            OUTRAD_F(ICF) = BBF*RPI*ONE_D%Q_RAD_OUT
-         ELSE
-            EPS_SIGMA_TMP4 = ONE_D%EMISSIVITY*SIGMA*ONE_D%TMP_F**4
-            ONE_D%Q_RAD_OUT = ONE_D%Q_RAD_OUT + BBF*EPS_SIGMA_TMP4
-            OUTRAD_F(ICF) = BBF*RPI*EPS_SIGMA_TMP4
-         ENDIF
+         OUTRAD_F(ICF) = BBF*RPI*ONE_D%Q_RAD_OUT
       ENDDO
 
       ! Compute boundary condition term incoming radiation integral
@@ -4106,7 +4055,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                CKLOOP: DO K=KSTART,KEND,KSTEP
                   CILOOP: DO I=ISTART,IEND,ISTEP
                      IC = CELL_INDEX(I,J,K)
-                     IF (SOLID(IC)) CYCLE CILOOP
+                     IF (CELL(IC)%SOLID) CYCLE CILOOP
                      ILXU = IL(I-ISTEP,J,K)
                      ILYU = IL(I,J-JSTEP,K)
                      ILZU = IL(I,J,K-KSTEP)
@@ -4127,17 +4076,17 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                      IF (MODULO(N,NRP(1))==1) AYD = 0._EB  ! Zero out the terms involving symmetric overhang
                      IF (MODULO(N,NRP(1))==0) AYU = 0._EB
                      IF (IC/=0) THEN
-                        WC => WALL(WALL_INDEX(IC,-ISTEP))
+                        WC => WALL(CELL(IC)%WALL_INDEX(-ISTEP))
                         IF (WC%BOUNDARY_TYPE==SOLID_BOUNDARY) THEN
                            BR => BOUNDARY_RADIA(WC%BR_INDEX)
                            ILXU = BR%BAND(IBND)%ILW(N)
                         ENDIF
-                        WC => WALL(WALL_INDEX(IC,-JSTEP*2))
+                        WC => WALL(CELL(IC)%WALL_INDEX(-JSTEP*2))
                         IF (WC%BOUNDARY_TYPE==SOLID_BOUNDARY) THEN
                            BR => BOUNDARY_RADIA(WC%BR_INDEX)
                            ILYU = BR%BAND(IBND)%ILW(N)
                         ENDIF
-                        WC => WALL(WALL_INDEX(IC,-KSTEP*3))
+                        WC => WALL(CELL(IC)%WALL_INDEX(-KSTEP*3))
                         IF (WC%BOUNDARY_TYPE==SOLID_BOUNDARY) THEN
                            BR => BOUNDARY_RADIA(WC%BR_INDEX)
                            ILZU = BR%BAND(IBND)%ILW(N)
@@ -4158,19 +4107,19 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                K2LOOP: DO K=KSTART,KEND,KSTEP
                   I2LOOP: DO I=ISTART,IEND,ISTEP
                      IC = CELL_INDEX(I,J,K)
-                     IF (SOLID(IC)) CYCLE I2LOOP
+                     IF (CELL(IC)%SOLID) CYCLE I2LOOP
                      ILXU  = IL(I-ISTEP,J,K)
                      ILZU  = IL(I,J,K-KSTEP)
                      VC  = DX(I) * DZ(K)
                      AX  =         DZ(K) * ABS(DLX(N))
                      AZ  = DX(I)         * ABS(DLZ(N))
                      IF (IC/=0) THEN
-                        WC => WALL(WALL_INDEX(IC,-ISTEP))
+                        WC => WALL(CELL(IC)%WALL_INDEX(-ISTEP))
                         IF (WC%BOUNDARY_TYPE==SOLID_BOUNDARY) THEN
                            BR => BOUNDARY_RADIA(WC%BR_INDEX)
                            ILXU = BR%BAND(IBND)%ILW(N)
                         ENDIF
-                        WC => WALL(WALL_INDEX(IC,-KSTEP*3))
+                        WC => WALL(CELL(IC)%WALL_INDEX(-KSTEP*3))
                         IF (WC%BOUNDARY_TYPE==SOLID_BOUNDARY) THEN
                            BR => BOUNDARY_RADIA(WC%BR_INDEX)
                            ILZU = BR%BAND(IBND)%ILW(N)
@@ -4225,7 +4174,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                      VC1 = DY(J) * DZ(K)
                      AZ1 = DY(J) * ABS(DLZ(N))
                      IC = CELL_INDEX(I,J,K)
-                     IF (SOLID(IC)) CYCLE SLICE_LOOP
+                     IF (CELL(IC)%SOLID) CYCLE SLICE_LOOP
                      ILXU  = IL(I-ISTEP,J,K)
                      ILYU  = IL(I,J-JSTEP,K)
                      ILZU  = IL(I,J,K-KSTEP)
@@ -4233,29 +4182,29 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                      AY  = DX(I) * AY1
                      AZ  = DX(I) * AZ1
                      IF (IC/=0) THEN
-                        WC => WALL(WALL_INDEX(IC,-ISTEP))
+                        WC => WALL(CELL(IC)%WALL_INDEX(-ISTEP))
                         IF (WC%BOUNDARY_TYPE==SOLID_BOUNDARY) THEN
                            BR => BOUNDARY_RADIA(WC%BR_INDEX)
                            ILXU = BR%BAND(IBND)%ILW(N)
                         ENDIF
-                        WC => WALL(WALL_INDEX(IC,-JSTEP*2))
+                        WC => WALL(CELL(IC)%WALL_INDEX(-JSTEP*2))
                         IF (WC%BOUNDARY_TYPE==SOLID_BOUNDARY) THEN
                            BR => BOUNDARY_RADIA(WC%BR_INDEX)
                            ILYU = BR%BAND(IBND)%ILW(N)
                         ENDIF
-                        WC => WALL(WALL_INDEX(IC,-KSTEP*3))
+                        WC => WALL(CELL(IC)%WALL_INDEX(-KSTEP*3))
                         IF (WC%BOUNDARY_TYPE==SOLID_BOUNDARY) THEN
                            BR => BOUNDARY_RADIA(WC%BR_INDEX)
                            ILZU = BR%BAND(IBND)%ILW(N)
                         ENDIF
                      ENDIF
                      IF (CC_IBM) THEN
-                        IF (CCVAR(I,J,K,IBM_CGSC) == IBM_SOLID) CYCLE SLICE_LOOP
+                        IF (CCVAR(I,J,K,CC_CGSC) == CC_SOLID) CYCLE SLICE_LOOP
                         AFX_AUX  = 0._EB; AFY_AUX  = 0._EB; AFZ_AUX  = 0._EB
                         ILXU_AUX = 0._EB; ILYU_AUX = 0._EB; ILZU_AUX = 0._EB
                         ! X axis
                         IADD= -(1+ISTEP)/2
-                        ICR = FCVAR(I+IADD,J,K,IBM_IDRA,IAXIS) ! List of CFACES assigned to upwind X face.
+                        ICR = FCVAR(I+IADD,J,K,CC_IDRA,IAXIS) ! List of CFACES assigned to upwind X face.
                         DO IFA=1,RAD_CFACE(ICR)%N_ASSIGNED_CFACES_RADI
                            ICF=RAD_CFACE(ICR)%ASSIGNED_CFACES_RADI(1,IFA)
                            CFA => CFACE(ICF)
@@ -4268,7 +4217,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                         ENDDO
                         ! Y axis
                         IADD= -(1+JSTEP)/2
-                        ICR = FCVAR(I,J+IADD,K,IBM_IDRA,JAXIS) ! List of CFACES assigned to upwind Y face.
+                        ICR = FCVAR(I,J+IADD,K,CC_IDRA,JAXIS) ! List of CFACES assigned to upwind Y face.
                         DO IFA=1,RAD_CFACE(ICR)%N_ASSIGNED_CFACES_RADI
                            ICF=RAD_CFACE(ICR)%ASSIGNED_CFACES_RADI(1,IFA)
                            CFA => CFACE(ICF)
@@ -4281,7 +4230,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                         ENDDO
                         ! Z axis
                         IADD= -(1+KSTEP)/2
-                        ICR = FCVAR(I,J,K+IADD,IBM_IDRA,KAXIS) ! List of CFACES assigned to upwind Z face.
+                        ICR = FCVAR(I,J,K+IADD,CC_IDRA,KAXIS) ! List of CFACES assigned to upwind Z face.
                         DO IFA=1,RAD_CFACE(ICR)%N_ASSIGNED_CFACES_RADI
                            ICF=RAD_CFACE(ICR)%ASSIGNED_CFACES_RADI(1,IFA)
                            CFA => CFACE(ICF)
@@ -4317,9 +4266,9 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                CKLOOP2: DO K=1,KBAR
                CILOOP2: DO I=1,IBAR
                   IC = CELL_INDEX(I,J,K)
-                  IF (SOLID(IC)) CYCLE CILOOP2
-                  IWUP   = WALL_INDEX(CELL_INDEX(I,J,K),-2)
-                  IWDOWN = WALL_INDEX(CELL_INDEX(I,J,K), 2)
+                  IF (CELL(IC)%SOLID) CYCLE CILOOP2
+                  IWUP   = CELL(CELL_INDEX(I,J,K))%WALL_INDEX(-2)
+                  IWDOWN = CELL(CELL_INDEX(I,J,K))%WALL_INDEX( 2)
                   IF (IWUP /=0 .AND. IWDOWN /= 0) THEN
                      BR_UP   => BOUNDARY_RADIA(WALL(IWUP)%BR_INDEX)
                      BR_DOWN => BOUNDARY_RADIA(WALL(IWDOWN)%BR_INDEX)
@@ -4375,17 +4324,17 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                   I = CUT_CELL(ICC)%IJK(IAXIS); ILO=I-1; IHI=I+1
                   ! Drop if cut-cell is same as cartesian cell.
                   IF( SUM(CUT_CELL(ICC)%VOLUME(1:CUT_CELL(ICC)%NCELL)) > 0.99_EB*DX(I)*DY(J)*DZ(K) ) CYCLE CUT_CELL_DO
-                  IF (K==1    .OR. FCVAR(I,J,K-1,IBM_FGSC,KAXIS)==IBM_SOLID) KLO=K
-                  IF (K==KBAR .OR. FCVAR(I,J,K  ,IBM_FGSC,KAXIS)==IBM_SOLID) KHI=K
-                  IF (J==1    .OR. FCVAR(I,J-1,K,IBM_FGSC,JAXIS)==IBM_SOLID) JLO=J
-                  IF (J==JBAR .OR. FCVAR(I,J  ,K,IBM_FGSC,JAXIS)==IBM_SOLID) JHI=J
-                  IF (I==1    .OR. FCVAR(I-1,J,K,IBM_FGSC,IAXIS)==IBM_SOLID) ILO=I
-                  IF (I==IBAR .OR. FCVAR(I  ,J,K,IBM_FGSC,IAXIS)==IBM_SOLID) IHI=I
+                  IF (K==1    .OR. FCVAR(I,J,K-1,CC_FGSC,KAXIS)==CC_SOLID) KLO=K
+                  IF (K==KBAR .OR. FCVAR(I,J,K  ,CC_FGSC,KAXIS)==CC_SOLID) KHI=K
+                  IF (J==1    .OR. FCVAR(I,J-1,K,CC_FGSC,JAXIS)==CC_SOLID) JLO=J
+                  IF (J==JBAR .OR. FCVAR(I,J  ,K,CC_FGSC,JAXIS)==CC_SOLID) JHI=J
+                  IF (I==1    .OR. FCVAR(I-1,J,K,CC_FGSC,IAXIS)==CC_SOLID) ILO=I
+                  IF (I==IBAR .OR. FCVAR(I  ,J,K,CC_FGSC,IAXIS)==CC_SOLID) IHI=I
                   IL1 = 0._EB
                   DO KK=KLO,KHI
                     DO JJ=JLO,JHI
                       II_DO : DO II=ILO,IHI
-                        IF(CCVAR(II,JJ,KK,IBM_CGSC)/=IBM_GASPHASE) CYCLE II_DO
+                        IF(CCVAR(II,JJ,KK,CC_CGSC)/=CC_GASPHASE) CYCLE II_DO
                         IL1   = MAX(IL1,IL(II,JJ,KK))
                       ENDDO II_DO
                     ENDDO
@@ -4492,7 +4441,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          IF (WC%BOUNDARY_TYPE/=SOLID_BOUNDARY) CYCLE
          ONE_D => BOUNDARY_ONE_D(WC%OD_INDEX)
          SF  => SURFACE(WC%SURF_INDEX)
-         EFLUX = EVALUATE_RAMP(T,SF%RAMP_INDEX(TIME_EFLUX),TAU=SF%TAU(TIME_EFLUX))*SF%EXTERNAL_FLUX
+         EFLUX = EVALUATE_RAMP(T,SF%RAMP(TIME_EFLUX)%INDEX,TAU=SF%RAMP(TIME_EFLUX)%TAU)*SF%EXTERNAL_FLUX
          ONE_D%Q_RAD_IN  = ONE_D%Q_RAD_IN + ONE_D%EMISSIVITY*(INRAD_W(IW)+BBFA*EFLUX)
       ENDDO
 
@@ -4501,7 +4450,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          IF (CFACE(ICF)%BOUNDARY_TYPE==NULL_BOUNDARY) CYCLE
          ONE_D => BOUNDARY_ONE_D(CFA%OD_INDEX)
          SF  => SURFACE(CFA%SURF_INDEX)
-         EFLUX = EVALUATE_RAMP(T,SF%RAMP_INDEX(TIME_EFLUX),TAU=SF%TAU(TIME_EFLUX))*SF%EXTERNAL_FLUX
+         EFLUX = EVALUATE_RAMP(T,SF%RAMP(TIME_EFLUX)%INDEX,TAU=SF%RAMP(TIME_EFLUX)%TAU)*SF%EXTERNAL_FLUX
          ONE_D%Q_RAD_IN  = ONE_D%Q_RAD_IN + ONE_D%EMISSIVITY*(INRAD_F(ICF)+BBFA*EFLUX)
       ENDDO
 
@@ -4554,7 +4503,7 @@ IF (SOLID_PARTICLES .AND. UPDATE_INTENSITY) THEN
       IF (LPC%SOLID_PARTICLE .OR. LPC%MASSLESS_TARGET) THEN
          SF => SURFACE(LPC%SURF_INDEX)
          ONE_D => BOUNDARY_ONE_D(LP%OD_INDEX)
-         EFLUX = EVALUATE_RAMP(T,SF%RAMP_INDEX(TIME_EFLUX),TAU=SF%TAU(TIME_EFLUX))*SF%EXTERNAL_FLUX
+         EFLUX = EVALUATE_RAMP(T,SF%RAMP(TIME_EFLUX)%INDEX,TAU=SF%RAMP(TIME_EFLUX)%TAU)*SF%EXTERNAL_FLUX
          IF (LP%ORIENTATION_INDEX>0) THEN
             BR => BOUNDARY_RADIA(LP%BR_INDEX)
             ONE_D%Q_RAD_IN = 0._EB
@@ -4566,7 +4515,6 @@ IF (SOLID_PARTICLES .AND. UPDATE_INTENSITY) THEN
             BC => BOUNDARY_COORD(LP%BC_INDEX)
             ONE_D%Q_RAD_IN = ONE_D%EMISSIVITY*(0.25_EB*UII(BC%IIG,BC%JJG,BC%KKG) + EFLUX)
          ENDIF
-         IF (LPC%SOLID_PARTICLE) ONE_D%Q_RAD_OUT = ONE_D%EMISSIVITY*SIGMA*ONE_D%TMP_F**4
       ENDIF
    ENDDO PARTICLE_LOOP
 ENDIF
@@ -4640,9 +4588,9 @@ DO N=1,N_INIT
             ! handle HRRPUV initialization in cutcells
             ! note: CC not yet connected to radiant fraction correction
             CC_IBM_IF: IF (CC_IBM) THEN
-               IF (CCVAR(I,J,K,IBM_CGSC) == IBM_SOLID) EXIT CC_IBM_IF
-               IF (CCVAR(I,J,K,IBM_IDCC) > 0) THEN ! we have a cutcell
-                  ICC=CCVAR(I,J,K,IBM_IDCC)
+               IF (CCVAR(I,J,K,CC_CGSC) == CC_SOLID) EXIT CC_IBM_IF
+               IF (CCVAR(I,J,K,CC_IDCC) > 0) THEN ! we have a cutcell
+                  ICC=CCVAR(I,J,K,CC_IDCC)
                   DO JCC=1,CUT_CELL(ICC)%NCELL
                      CUT_CELL(ICC)%Q(JCC) = CUT_CELL(ICC)%Q(JCC) + TIME_RAMP_FACTOR*IN%HRRPUV
                   ENDDO
