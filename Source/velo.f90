@@ -33,7 +33,7 @@ CONTAINS
 
 SUBROUTINE COMPUTE_VISCOSITY(T,NM,APPLY_TO_ESTIMATED_VARIABLES)
 
-USE PHYSICAL_FUNCTIONS, ONLY: GET_VISCOSITY,LES_FILTER_WIDTH_FUNCTION,GET_POTENTIAL_TEMPERATURE,GET_CONDUCTIVITY,GET_SPECIFIC_HEAT
+USE PHYSICAL_FUNCTIONS, ONLY: GET_VISCOSITY,GET_POTENTIAL_TEMPERATURE,GET_CONDUCTIVITY,GET_SPECIFIC_HEAT
 USE TURBULENCE, ONLY: VARDEN_DYNSMAG,TEST_FILTER,FILL_EDGES,WALL_MODEL,WALE_VISCOSITY
 USE MATH_FUNCTIONS, ONLY:EVALUATE_RAMP
 USE CC_SCALARS, ONLY : CC_COMPUTE_KRES,CC_COMPUTE_VISCOSITY,CUTFACE_VELOCITIES
@@ -119,7 +119,6 @@ SELECT_TURB: SELECT CASE (TURB_MODEL)
       DO K=1,KBAR
          DO J=1,JBAR
             DO I=1,IBAR
-               IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                MU(I,J,K) = MU_DNS(I,J,K) + RHOP(I,J,K)*CSD2(I,J,K)*STRAIN_RATE(I,J,K)
             ENDDO
          ENDDO
@@ -142,7 +141,6 @@ SELECT_TURB: SELECT CASE (TURB_MODEL)
       DO K=1,KBAR
          DO J=1,JBAR
             DO I=1,IBAR
-               IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                UP(I,J,K) = 0.5_EB*(UU(I,J,K) + UU(I-1,J,K))
                VP(I,J,K) = 0.5_EB*(VV(I,J,K) + VV(I,J-1,K))
                WP(I,J,K) = 0.5_EB*(WW(I,J,K) + WW(I,J,K-1))
@@ -193,10 +191,8 @@ SELECT_TURB: SELECT CASE (TURB_MODEL)
       DO K=1,KBAR
          DO J=1,JBAR
             DO I=1,IBAR
-               IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
-               DELTA = LES_FILTER_WIDTH_FUNCTION(DX(I),DY(J),DZ(K))
+               DELTA = LES_FILTER_WIDTH(I,J,K)
                KSGS = 0.5_EB*( (UP(I,J,K)-UP_HAT(I,J,K))**2 + (VP(I,J,K)-VP_HAT(I,J,K))**2 + (WP(I,J,K)-WP_HAT(I,J,K))**2 )
-
                NU_EDDY = C_DEARDORFF*DELTA*SQRT(KSGS)
                MU(I,J,K) = MU_DNS(I,J,K) + RHOP(I,J,K)*NU_EDDY
             ENDDO
@@ -212,7 +208,6 @@ SELECT_TURB: SELECT CASE (TURB_MODEL)
       DO K=1,KBAR
          DO J=1,JBAR
             DO I=1,IBAR
-               IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                DUDX = RDX(I)*(UU(I,J,K)-UU(I-1,J,K))
                DVDY = RDY(J)*(VV(I,J,K)-VV(I,J-1,K))
                DWDZ = RDZ(K)*(WW(I,J,K)-WW(I,J,K-1))
@@ -265,8 +260,7 @@ SELECT_TURB: SELECT CASE (TURB_MODEL)
       DO K=1,KBAR
          DO J=1,JBAR
             DO I=1,IBAR
-               IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
-               DELTA = LES_FILTER_WIDTH_FUNCTION(DX(I),DY(J),DZ(K))
+               DELTA = LES_FILTER_WIDTH(I,J,K)
                ! compute velocity gradient tensor
                DUDX = RDX(I)*(UU(I,J,K)-UU(I-1,J,K))
                DVDY = RDY(J)*(VV(I,J,K)-VV(I,J-1,K))
@@ -295,7 +289,6 @@ END SELECT SELECT_TURB
 DO K=1,KBAR
    DO J=1,JBAR
       DO I=1,IBAR
-         IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
          U2 = 0.25_EB*(UU(I-1,J,K)+UU(I,J,K))**2
          V2 = 0.25_EB*(VV(I,J-1,K)+VV(I,J,K))**2
          W2 = 0.25_EB*(WW(I,J,K-1)+WW(I,J,K))**2
@@ -355,7 +348,7 @@ WALL_LOOP: DO IW=1,N_EXTERNAL_WALL_CELLS+N_INTERNAL_WALL_CELLS
          END SELECT
 
          IF (SIM_MODE/=DNS_MODE) THEN
-            DELTA = LES_FILTER_WIDTH_FUNCTION(DX(IIG),DY(JJG),DZ(KKG))
+            DELTA = LES_FILTER_WIDTH(IIG,JJG,KKG)
             SELECT CASE(SF%NEAR_WALL_TURB_MODEL)
                CASE DEFAULT
                   NU_EDDY = 0._EB
@@ -450,7 +443,6 @@ SELECT CASE (TURB_MODEL)
       DO K=1,KBAR
          DO J=1,JBAR
             DO I=1,IBAR
-               IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
                DUDX = RDX(I)*(UU(I,J,K)-UU(I-1,J,K))
                DVDY = RDY(J)*(VV(I,J,K)-VV(I,J-1,K))
                DWDZ = RDZ(K)*(WW(I,J,K)-WW(I,J,K-1))
@@ -1003,7 +995,6 @@ WP=0._EB
 DO K=1,KBAR
    DO J=1,JBAR
       DO I=1,IBAR
-         IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE
          UP(I,J,K) = 0.5_EB*(UU(I,J,K) + UU(I-1,J,K))
          VP(I,J,K) = 0.5_EB*(VV(I,J,K) + VV(I,J-1,K))
          WP(I,J,K) = 0.5_EB*(WW(I,J,K) + WW(I,J,K-1))
@@ -1737,12 +1728,6 @@ FREEZE_VELOCITY_IF: IF (FREEZE_VELOCITY) THEN
    W = WS
 ELSE FREEZE_VELOCITY_IF
 
-   IF (STORE_OLD_VELOCITY) THEN
-      U_OLD = U
-      V_OLD = V
-      W_OLD = W
-   ENDIF
-
    IF (CC_IBM) THEN
       T_USED(4)=T_USED(4)+CURRENT_TIME()-T_NOW
       CALL CC_PROJECT_VELOCITY(NM,DT,.TRUE.)
@@ -1918,10 +1903,15 @@ EDGE_LOOP: DO IE=1,EDGE_COUNT(NM)
 
    ! Throw out edges that are completely surrounded by blockages or the exterior of the domain
 
-   IF ((CELL(ED%CELL_INDEX_MM)%EXTERIOR .OR. CELL(ED%CELL_INDEX_MM)%SOLID) .AND. &
-       (CELL(ED%CELL_INDEX_PM)%EXTERIOR .OR. CELL(ED%CELL_INDEX_PM)%SOLID) .AND. &
-       (CELL(ED%CELL_INDEX_MP)%EXTERIOR .OR. CELL(ED%CELL_INDEX_MP)%SOLID) .AND. &
-       (CELL(ED%CELL_INDEX_PP)%EXTERIOR .OR. CELL(ED%CELL_INDEX_PP)%SOLID)) CYCLE EDGE_LOOP
+   ICMM = ED%CELL_INDEX_MM
+   ICPM = ED%CELL_INDEX_PM
+   ICMP = ED%CELL_INDEX_MP
+   ICPP = ED%CELL_INDEX_PP
+
+   IF ((CELL(ICMM)%EXTERIOR .OR. CELL(ICMM)%SOLID) .AND. &
+       (CELL(ICPM)%EXTERIOR .OR. CELL(ICPM)%SOLID) .AND. &
+       (CELL(ICMP)%EXTERIOR .OR. CELL(ICMP)%SOLID) .AND. &
+       (CELL(ICPP)%EXTERIOR .OR. CELL(ICPP)%SOLID)) CYCLE EDGE_LOOP
 
    ! Unpack indices for the edge
 
@@ -1929,10 +1919,6 @@ EDGE_LOOP: DO IE=1,EDGE_COUNT(NM)
    JJ     = ED%J
    KK     = ED%K
    IEC    = ED%AXIS
-   ICMM   = ED%CELL_INDEX_MM
-   ICPM   = ED%CELL_INDEX_PM
-   ICMP   = ED%CELL_INDEX_MP
-   ICPP   = ED%CELL_INDEX_PP
    NOM(1) = ED%NOM_1
    IIO(1) = ED%IIO_1
    JJO(1) = ED%JJO_1
@@ -2521,8 +2507,8 @@ EDGE_LOOP: DO IE=1,EDGE_COUNT(NM)
    ! If the edge is on an interpolated boundary, and all cells around it are not solid, cycle
 
    IF (INTERPOLATED_EDGE) THEN
-      IF (.NOT.CELL(ED%CELL_INDEX_MM)%SOLID .AND. .NOT.CELL(ED%CELL_INDEX_PM)%SOLID .AND. &
-          .NOT.CELL(ED%CELL_INDEX_MP)%SOLID .AND. .NOT.CELL(ED%CELL_INDEX_PP)%SOLID) CYCLE EDGE_LOOP
+      IF (.NOT.CELL(ICMM)%SOLID .AND. .NOT.CELL(ICPM)%SOLID .AND. &
+          .NOT.CELL(ICMP)%SOLID .AND. .NOT.CELL(ICPP)%SOLID) CYCLE EDGE_LOOP
    ENDIF
 
    ! Loop over all 4 normal directions and compute vorticity and stress tensor components for each
