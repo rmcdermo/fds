@@ -212,7 +212,7 @@ REAL(EB) :: ERR_EST,ERR_TOL,A1(1:N_TRACKED_SPECIES),A2(1:N_TRACKED_SPECIES),A4(1
             TOTAL_MIXED_MASS_1,TOTAL_MIXED_MASS_2,TOTAL_MIXED_MASS_4,TOTAL_MIXED_MASS,&
             ZETA_1,ZETA_2,ZETA_4,D_F,TMP_IN,C_U,TMP_SGS,&
             PHI_TILDE,ZZ_FLAME(1:N_TRACKED_SPECIES),H_IN,H_FLAME,ZETA_FLAME,MW_0,MW_FLAME,KAPPA_0,KAPPA_FLAME,&
-            TRI_NUMER,TRI_DENOM,TMP_FLAME_LOC,VOL_FRAC_FLAME_LOC
+            TRI_NUMER,TRI_DENOM,TMP_FLAME_LOC,VOL_FRAC_FLAME_LOC,MW_MIXED,TMP_MIXED
 INTEGER :: NR,NS,ITER,TVI,RICH_ITER,TIME_ITER,RICH_ITER_MAX,IBND
 INTEGER, PARAMETER :: TV_ITER_MIN=5
 LOGICAL :: TV_FLUCT(1:N_TRACKED_SPECIES),EXTINCT
@@ -446,9 +446,26 @@ TMP_FLAME_IF: IF ((TRI_MODEL .OR. USE_FLAME_HTC_MODEL) .AND. Q_OUT>TWO_EPSILON_E
 
    TRI_IF: IF (TRI_MODEL) THEN
       DO IBND=1,NUMBER_SPECTRAL_BANDS
-         ! uncomment to include absorption coefficient
-         KAPPA_0     = GET_KAPPA(ZZ_GET,TMP_IN,IBND)
-         KAPPA_FLAME = KAPPA_0 ! GET_KAPPA(ZZ_MIXED,TMP_FLAME_LOC,IBND)
+         SELECT CASE(TRI_VERSION)
+            CASE DEFAULT
+               ! TRI_0 (T self-correlation, kappa[initial cell species composition] and temperature)
+               KAPPA_0     = GET_KAPPA(ZZ_0,TMP_IN,IBND)
+               KAPPA_FLAME = KAPPA_0
+            CASE(1)
+               ! TRI_1 (T self-correlation, kappa[mean cell species composition] and temperature)
+               CALL GET_MOLECULAR_WEIGHT(ZZ_MIXED,MW_MIXED)
+               TMP_MIXED   = PBAR(KKC,PRESSURE_ZONE(IIC,JJC,KKC))*MW_MIXED/(R0*RHO_IN)
+               KAPPA_0     = GET_KAPPA(ZZ_GET,TMP_MIXED,IBND)
+               KAPPA_FLAME = KAPPA_0
+            CASE(2)
+               ! TRI_2 (T self-correlation + T-kappa cross-correlation)
+               KAPPA_0     = GET_KAPPA(ZZ_GET,TMP_IN,IBND)
+               KAPPA_FLAME = GET_KAPPA(ZZ_GET,TMP_FLAME_LOC,IBND)
+            CASE(3)
+               ! TRI_3 (T self + kappa self + T-kappa cross)
+               KAPPA_0     = GET_KAPPA(ZZ_0,TMP_IN,IBND)
+               KAPPA_FLAME = GET_KAPPA(ZZ_MIXED,TMP_FLAME_LOC,IBND)
+         END SELECT
 
          TRI_NUMER = (1._EB-VOL_FRAC_FLAME_LOC)*KAPPA_0*TMP_IN**4 + VOL_FRAC_FLAME_LOC*KAPPA_FLAME*TMP_FLAME_LOC**4
          TRI_DENOM = KAPPA_0*TMP_IN**4

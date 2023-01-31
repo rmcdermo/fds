@@ -416,6 +416,7 @@ LOGICAL :: PILOT_FUEL_MODEL=.FALSE.                                 !< Allow pil
 LOGICAL :: SUBGRID_IGNITION_MODEL=.FALSE.                           !< Add TMP_SGS when checking AIT
 LOGICAL :: COMPUTE_ADIABATIC_FLAME_TEMPERATURE=.TRUE.               !< Report adiabatic flame temperature per REAC in LU_OUTPUT
 LOGICAL :: TRI_MODEL=.FALSE.                                        !< Turbulence-Radiation Interaction submodel
+INTEGER :: TRI_VERSION=0                                            !< Select TRI model version
 
 REAL(EB) :: RSUM0                                     !< Initial specific gas constant, \f$ R \sum_i Z_{i,0}/W_i \f$
 
