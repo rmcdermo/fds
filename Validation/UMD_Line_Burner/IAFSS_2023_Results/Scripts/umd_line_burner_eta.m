@@ -18,7 +18,8 @@ Lf_dt  = 10;
 plot_style
 
 expdir = '../../../../../exp/Submodules/macfp-db/Extinction/UMD_Line_Burner/Experimental_Data/';
-outdir = '../Baseline_2/';
+% outdir = '../Baseline/';
+outdir = '~/blaze_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/UMD_Line_Burner/IAFSS_2023_Results/TRI_MODEL/';
 pltdir = '../Plots/';
 
 exp_fname    = {'CH4_A_Data.csv','C3H8_A_Data.csv'};
@@ -51,25 +52,27 @@ is_case_1_run=1; if ~exist([outdir,fuel_name{i_fuel},'_dx_1p25cm_hrr.csv']); is_
 is_case_2_run=1; if ~exist([outdir,fuel_name{i_fuel},'_dx_p625cm_hrr.csv']); is_case_2_run=0; end
 is_case_3_run=1; if ~exist([outdir,fuel_name{i_fuel},'_dx_p3125cm_hrr.csv']); is_case_3_run=0; end
 
+row_start = 5;
+
 if is_case_1_run % case 1 if
     % dx=1.25 cm results
     HRR1 = importdata([outdir,fuel_name{i_fuel},'_dx_1p25cm_hrr.csv'],',',2);
     DEV1 = importdata([outdir,fuel_name{i_fuel},'_dx_1p25cm_devc.csv'],',',2);
 
-    Time_FDS_1 = DEV1.data(:,find(strcmp(DEV1.colheaders,'Time')));
-    XO2_FDS_1 = DEV1.data(:,find(strcmp(DEV1.colheaders,'"XO2"')));
-    q_R_FDS_1 = 0.5*( DEV1.data(:,find(strcmp(DEV1.colheaders,'"qrad1"'))) + DEV1.data(:,find(strcmp(DEV1.colheaders,'"qrad2"'))) );
-    HRR_FDS_1 = HRR1.data(:,find(strcmp(HRR1.colheaders,'HRR')));
+    Time_FDS_1 = DEV1.data(row_start:end,find(strcmp(DEV1.colheaders,'Time')));
+    XO2_FDS_1 = DEV1.data(row_start:end,find(strcmp(DEV1.colheaders,'"XO2"')));
+    q_R_FDS_1 = 0.5*( DEV1.data(row_start:end,find(strcmp(DEV1.colheaders,'"qrad1"'))) + DEV1.data(row_start:end,find(strcmp(DEV1.colheaders,'"qrad2"'))) );
+    HRR_FDS_1 = HRR1.data(row_start:end,find(strcmp(HRR1.colheaders,'HRR')));
     switch i_fuel
         case 1
-            MLR_FDS_1 = HRR1.data(:,find(strcmp(HRR1.colheaders,'MLR_METHANE')));
+            MLR_FDS_1 = HRR1.data(row_start:end,find(strcmp(HRR1.colheaders,'MLR_METHANE')));
         case 2
-            MLR_FDS_1 = HRR1.data(:,find(strcmp(HRR1.colheaders,'MLR_PROPANE')));
+            MLR_FDS_1 = HRR1.data(row_start:end,find(strcmp(HRR1.colheaders,'MLR_PROPANE')));
     end
     eta_FDS_1 = HRR_FDS_1./(MLR_FDS_1*fuel_hoc(i_fuel));
-    QR_FDS_1 = abs(HRR1.data(:,find(strcmp(HRR1.colheaders,'Q_RADI'))));
-    GLOB_CHI_R_1 = QR_FDS_1./HRR_FDS_1;
-    L_F_1 = DEV1.data(:,find(strcmp(DEV1.colheaders,'"L_F"')));
+    QR_FDS_1 = abs(HRR1.data(row_start:end,find(strcmp(HRR1.colheaders,'Q_RADI'))));
+    GLOB_CHI_R_1 = QR_FDS_1./(MLR_FDS_1*fuel_hoc(i_fuel)); % Q in denom based on definition of X_rad in James White thesis
+    L_F_1 = DEV1.data(row_start:end,find(strcmp(DEV1.colheaders,'"L_F"')));
 
     % % flame height
     % colLf01 = find(strcmp(DEV1.colheaders,'"Lf-1"'));
@@ -99,20 +102,20 @@ if is_case_2_run % case 2 if
     HRR2 = importdata([outdir,fuel_name{i_fuel},'_dx_p625cm_hrr.csv'],',',2);
     DEV2 = importdata([outdir,fuel_name{i_fuel},'_dx_p625cm_devc.csv'],',',2);
 
-    Time_FDS_2 = DEV2.data(:,find(strcmp(DEV2.colheaders,'Time')));
-    XO2_FDS_2 = DEV2.data(:,find(strcmp(DEV2.colheaders,'"XO2"')));
-    q_R_FDS_2 = 0.5*( DEV2.data(:,find(strcmp(DEV2.colheaders,'"qrad1"'))) + DEV2.data(:,find(strcmp(DEV2.colheaders,'"qrad2"'))) );
-    HRR_FDS_2 = HRR2.data(:,find(strcmp(HRR2.colheaders,'HRR')));
+    Time_FDS_2 = DEV2.data(row_start:end,find(strcmp(DEV2.colheaders,'Time')));
+    XO2_FDS_2 = DEV2.data(row_start:end,find(strcmp(DEV2.colheaders,'"XO2"')));
+    q_R_FDS_2 = 0.5*( DEV2.data(row_start:end,find(strcmp(DEV2.colheaders,'"qrad1"'))) + DEV2.data(row_start:end,find(strcmp(DEV2.colheaders,'"qrad2"'))) );
+    HRR_FDS_2 = HRR2.data(row_start:end,find(strcmp(HRR2.colheaders,'HRR')));
     switch i_fuel
         case 1
-            MLR_FDS_2 = HRR2.data(:,find(strcmp(HRR2.colheaders,'MLR_METHANE')));
+            MLR_FDS_2 = HRR2.data(row_start:end,find(strcmp(HRR2.colheaders,'MLR_METHANE')));
         case 2
-            MLR_FDS_2 = HRR2.data(:,find(strcmp(HRR2.colheaders,'MLR_PROPANE')));
+            MLR_FDS_2 = HRR2.data(row_start:end,find(strcmp(HRR2.colheaders,'MLR_PROPANE')));
     end
     eta_FDS_2 = HRR_FDS_2./(MLR_FDS_2*fuel_hoc(i_fuel));
-    QR_FDS_2 = abs(HRR2.data(:,find(strcmp(HRR2.colheaders,'Q_RADI'))));
-    GLOB_CHI_R_2 = QR_FDS_2./HRR_FDS_2;
-    L_F_2 = DEV2.data(:,find(strcmp(DEV2.colheaders,'"L_F"')));
+    QR_FDS_2 = abs(HRR2.data(row_start:end,find(strcmp(HRR2.colheaders,'Q_RADI'))));
+    GLOB_CHI_R_2 = QR_FDS_2./(MLR_FDS_2*fuel_hoc(i_fuel)); % Q in denom based on definition of X_rad in James White thesis
+    L_F_2 = DEV2.data(row_start:end,find(strcmp(DEV2.colheaders,'"L_F"')));
 
     % % flame height
     % colLf01 = find(strcmp(DEV2.colheaders,'"Lf-1"'));
@@ -142,20 +145,20 @@ if is_case_3_run % case 3 if
     HRR3 = importdata([outdir,fuel_name{i_fuel},'_dx_p3125cm_hrr.csv'],',',2);
     DEV3 = importdata([outdir,fuel_name{i_fuel},'_dx_p3125cm_devc.csv'],',',2);
 
-    Time_FDS_3 = DEV3.data(:,find(strcmp(DEV3.colheaders,'Time')));
-    XO2_FDS_3 = DEV3.data(:,find(strcmp(DEV3.colheaders,'"XO2"')));
-    q_R_FDS_3 = 0.5*( DEV3.data(:,find(strcmp(DEV3.colheaders,'"qrad1"'))) + DEV3.data(:,find(strcmp(DEV3.colheaders,'"qrad2"'))) );
-    HRR_FDS_3 = HRR3.data(:,find(strcmp(HRR3.colheaders,'HRR')));
+    Time_FDS_3 = DEV3.data(row_start:end,find(strcmp(DEV3.colheaders,'Time')));
+    XO2_FDS_3 = DEV3.data(row_start:end,find(strcmp(DEV3.colheaders,'"XO2"')));
+    q_R_FDS_3 = 0.5*( DEV3.data(row_start:end,find(strcmp(DEV3.colheaders,'"qrad1"'))) + DEV3.data(row_start:end,find(strcmp(DEV3.colheaders,'"qrad2"'))) );
+    HRR_FDS_3 = HRR3.data(row_start:end,find(strcmp(HRR3.colheaders,'HRR')));
     switch i_fuel
         case 1
-            MLR_FDS_3 = HRR3.data(:,find(strcmp(HRR3.colheaders,'MLR_METHANE')));
+            MLR_FDS_3 = HRR3.data(row_start:end,find(strcmp(HRR3.colheaders,'MLR_METHANE')));
         case 2
-            MLR_FDS_3 = HRR3.data(:,find(strcmp(HRR3.colheaders,'MLR_PROPANE')));
+            MLR_FDS_3 = HRR3.data(row_start:end,find(strcmp(HRR3.colheaders,'MLR_PROPANE')));
     end
     eta_FDS_3 = HRR_FDS_3./(MLR_FDS_3*fuel_hoc(i_fuel));
-    QR_FDS_3 = abs(HRR3.data(:,find(strcmp(HRR3.colheaders,'Q_RADI'))));
-    GLOB_CHI_R_3 = QR_FDS_3./HRR_FDS_3;
-    L_F_3 = DEV3.data(:,find(strcmp(DEV3.colheaders,'"L_F"')));
+    QR_FDS_3 = abs(HRR3.data(row_start:end,find(strcmp(HRR3.colheaders,'Q_RADI'))));
+    GLOB_CHI_R_3 = QR_FDS_3./(MLR_FDS_3*fuel_hoc(i_fuel)); % Q in denom based on definition of X_rad in James White thesis
+    L_F_3 = DEV3.data(row_start:end,find(strcmp(DEV3.colheaders,'"L_F"')));
 
     % % flame height
     % colLf01 = find(strcmp(DEV3.colheaders,'"Lf-1"'));
@@ -344,19 +347,19 @@ figure
 clear H
 set(gca,'Units',Plot_Units)
 set(gca,'Position',[Plot_X Plot_Y Plot_Width Plot_Height])
-H(1)=plot(XO2,Chi_R); hold on
-H(2)=plot(pw_ramp_XO2,pw_ramp_chir);
+H(1)=plot(XO2,Chi_R,'.','MarkerSize',10); hold on
+set(H(1),'Color',steel_blue)
 if is_case_run
-    if is_case_1_run; H(3)=plot(XO2_FDS_1,GLOB_CHI_R_1,line_fmt{1}); end
-    if is_case_2_run; H(4)=plot(XO2_FDS_2,GLOB_CHI_R_2,line_fmt{2}); end
-    if is_case_3_run; H(5)=plot(XO2_FDS_3,GLOB_CHI_R_3,line_fmt{3}); end
+    if is_case_1_run; H(2)=plot(XO2_FDS_1,GLOB_CHI_R_1,line_fmt{1}); end
+    if is_case_2_run; H(3)=plot(XO2_FDS_2,GLOB_CHI_R_2,line_fmt{2}); end
+    if is_case_3_run; H(4)=plot(XO2_FDS_3,GLOB_CHI_R_3,line_fmt{3}); end
     axis([0.10 0.21 0 0.35 ])
     xlabel('O2 (vol frac)','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
     ylabel('\chi_R','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
-    text(5,0.27,'Radiative Fraction Ramp','FontName',Font_Name,'FontSize',Title_Font_Size)
+    text(0.105,0.325,[Fuel_name{i_fuel},' Radiative Fraction'],'FontName',Font_Name,'FontSize',Title_Font_Size)
     set(gca,'FontName',Font_Name)
     set(gca,'FontSize',Label_Font_Size)
-    lh=legend(H,'Exp','Linear Ramp',key_fmt{:},'Location','SouthEast');
+    lh=legend(H,'Exp',key_fmt{:},'Location','SouthEast');
     set(lh,'FontName',Font_Name,'FontSize',Key_Font_Size)
     git_file=[outdir,fuel_name{i_fuel},git_tag_ext];
     addverstr(gca,git_file,'linear');

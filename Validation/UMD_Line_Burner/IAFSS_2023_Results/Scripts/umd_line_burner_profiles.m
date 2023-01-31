@@ -13,10 +13,11 @@ Marker_Size = 10;
 % return
 
 expdir = '../../../../../exp/Submodules/macfp-db/Extinction/UMD_Line_Burner/Experimental_Data/';
-outdir = '../Baseline_2/';
+% outdir = '../Baseline/';
+outdir = '~/blaze_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/UMD_Line_Burner/IAFSS_2023_Results/TRI_MODEL/';
 pltdir = '../Plots/';
 
-F1 = importdata([outdir,'methane_dx_1p25cm_line.csv'],',',2);
+F1 = importdata([outdir,'methane_XO2_18_dx_1p25cm_line.csv'],',',2);
 % F2 = importdata([outdir,'methane_dx_p625cm_line.csv'],',',2);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
