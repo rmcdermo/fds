@@ -29,7 +29,7 @@ Fuel_name    = {'Methane','Propane'};
 fuel_hoc     = [50010.3475,46334.6246]; % from .out file
 git_tag_ext  = '_dx_1p25cm_git.txt';
 
-line_fmt = {'bo-','ro-','ko-',};
+line_fmt = {'b--','r--','k--',};
 key_fmt  = {'{\it W/dx}=4','{\it W/dx}=8','{\it W/dx}=16'};
 
 i_fuel = 1
@@ -223,9 +223,9 @@ subr= 1:10:length(XO2);
 h=errorbar(XO2(subr),eta(subr),-S_eta(subr),S_eta(subr),-S_XO2(subr),S_XO2(subr),'.','MarkerSize',10); hold on
 set(h,'Color',steel_blue)
 if is_case_run
-    if is_case_1_run; H(2)=plot(XO2_FDS_1,eta_FDS_1,line_fmt{1}); end
-    if is_case_2_run; H(3)=plot(XO2_FDS_2,eta_FDS_2,line_fmt{2}); end
-    if is_case_3_run; H(4)=plot(XO2_FDS_3,eta_FDS_3,line_fmt{3}); end
+    if is_case_1_run; H(2)=plot(XO2_FDS_1,eta_FDS_1,line_fmt{1},'LineWidth',2); end
+    if is_case_2_run; H(3)=plot(XO2_FDS_2,eta_FDS_2,line_fmt{2},'LineWidth',2); end
+    if is_case_3_run; H(4)=plot(XO2_FDS_3,eta_FDS_3,line_fmt{3},'LineWidth',2); end
     axis([0.09 0.21 0 1.2 ])
     xlabel('O2 (vol frac)','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
     ylabel('\eta','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
@@ -347,12 +347,12 @@ figure
 clear H
 set(gca,'Units',Plot_Units)
 set(gca,'Position',[Plot_X Plot_Y Plot_Width Plot_Height])
-H(1)=plot(XO2,Chi_R,'.','MarkerSize',10); hold on
+H(1)=plot(XO2,Chi_R,'ko','MarkerSize',5); hold on
 set(H(1),'Color',steel_blue)
 if is_case_run
-    if is_case_1_run; H(2)=plot(XO2_FDS_1,GLOB_CHI_R_1,line_fmt{1}); end
-    if is_case_2_run; H(3)=plot(XO2_FDS_2,GLOB_CHI_R_2,line_fmt{2}); end
-    if is_case_3_run; H(4)=plot(XO2_FDS_3,GLOB_CHI_R_3,line_fmt{3}); end
+    if is_case_1_run; H(2)=plot(XO2_FDS_1,GLOB_CHI_R_1,line_fmt{1},'LineWidth',2); end
+    if is_case_2_run; H(3)=plot(XO2_FDS_2,GLOB_CHI_R_2,line_fmt{2},'LineWidth',2); end
+    if is_case_3_run; H(4)=plot(XO2_FDS_3,GLOB_CHI_R_3,line_fmt{3},'LineWidth',2); end
     axis([0.10 0.21 0 0.35 ])
     xlabel('O2 (vol frac)','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
     ylabel('\chi_R','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
