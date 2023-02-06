@@ -18,8 +18,8 @@ Lf_dt  = 10;
 plot_style
 
 expdir = '../../../../../exp/Submodules/macfp-db/Extinction/UMD_Line_Burner/Experimental_Data/';
-% outdir = '../Baseline/';
-outdir = '~/blaze_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/UMD_Line_Burner/IAFSS_2023_Results/TRI_MODEL/';
+% outdir = '../TRI-3/';
+outdir = '~/blaze_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/UMD_Line_Burner/IAFSS_2023_Results/Baseline/';
 pltdir = '../Plots/';
 
 exp_fname    = {'CH4_A_Data.csv','C3H8_A_Data.csv'};
@@ -217,11 +217,11 @@ set(gca,'Units',Plot_Units)
 set(gca,'Position',[Plot_X Plot_Y Plot_Width Plot_Height])
 
 steel_blue = [0 0.447 0.741];
-H(1)=plot(XO2,eta,'.','MarkerSize',10); hold on
-set(H(1),'Color',steel_blue)
+H(1)=plot(XO2,eta,'o','MarkerSize',5,'LineWidth',1.25); hold on
+set(H(1),'Color','black')
 subr= 1:10:length(XO2);
-h=errorbar(XO2(subr),eta(subr),-S_eta(subr),S_eta(subr),-S_XO2(subr),S_XO2(subr),'.','MarkerSize',10); hold on
-set(h,'Color',steel_blue)
+h=errorbar(XO2(subr),eta(subr),-S_eta(subr),S_eta(subr),-S_XO2(subr),S_XO2(subr),'o','MarkerSize',5,'LineWidth',1.25); hold on
+set(h,'Color','black')
 if is_case_run
     if is_case_1_run; H(2)=plot(XO2_FDS_1,eta_FDS_1,line_fmt{1},'LineWidth',2); end
     if is_case_2_run; H(3)=plot(XO2_FDS_2,eta_FDS_2,line_fmt{2},'LineWidth',2); end
@@ -347,8 +347,8 @@ figure
 clear H
 set(gca,'Units',Plot_Units)
 set(gca,'Position',[Plot_X Plot_Y Plot_Width Plot_Height])
-H(1)=plot(XO2,Chi_R,'ko','MarkerSize',5); hold on
-set(H(1),'Color',steel_blue)
+H(1)=plot(XO2,Chi_R,'o','MarkerSize',5,'LineWidth',1.25); hold on
+set(H(1),'Color','Black')
 if is_case_run
     if is_case_1_run; H(2)=plot(XO2_FDS_1,GLOB_CHI_R_1,line_fmt{1},'LineWidth',2); end
     if is_case_2_run; H(3)=plot(XO2_FDS_2,GLOB_CHI_R_2,line_fmt{2},'LineWidth',2); end

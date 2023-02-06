@@ -13,12 +13,13 @@ Marker_Size = 10;
 % return
 
 expdir = '../../../../../exp/Submodules/macfp-db/Extinction/UMD_Line_Burner/Experimental_Data/';
-outdir = '../Baseline/';
-% outdir = '~/blaze_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/UMD_Line_Burner/IAFSS_2023_Results/TRI_MODEL/';
+% outdir = '../Baseline/';
+outdir = '~/blaze_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/UMD_Line_Burner/IAFSS_2023_Results/Baseline/';
 pltdir = '../Plots/';
 
 F1 = importdata([outdir,'methane_XO2_18_dx_1p25cm_line.csv'],',',2);
 F2 = importdata([outdir,'methane_XO2_18_dx_p625cm_line.csv'],',',2);
+F3 = importdata([outdir,'methane_XO2_18_dx_p3125cm_line.csv'],',',2);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % mean temperature at z=0.125 m
@@ -43,8 +44,12 @@ TC1 = F1.data(:,find(strcmp(F1.colheaders,'TC_125')));
 yc2 = F2.data(:,find(strcmp(F2.colheaders,'y')));
 TC2 = F2.data(:,find(strcmp(F2.colheaders,'TC_125')));
 
+yc3 = F3.data(:,find(strcmp(F3.colheaders,'y')));
+TC3 = F3.data(:,find(strcmp(F3.colheaders,'TC_125')));
+
 H(2) = plot(yc1,TC1,'r-.','LineWidth',Line_Width); % dx = 1.25 cm
 H(3) = plot(yc2,TC2,'m--','LineWidth',Line_Width); % dx = 0.625 cm
+H(4) = plot(yc3,TC3,'b-','LineWidth',Line_Width); % dx = 0.3125 cm
 
 xmin = -0.25;
 xmax = 0.25;
@@ -60,7 +65,7 @@ text(xt,yt,'18 % Oxygen, z=0.125 m','FontName',Font_Name,'FontSize',Title_Font_S
 axis([xmin xmax ymin ymax])
 xlabel('Position (m)','FontName',Font_Name,'FontSize',Label_Font_Size,'Interpreter',Font_Interpreter)
 ylabel('TC Temperature (°C)','FontName',Font_Name,'FontSize',Label_Font_Size,'Interpreter',Font_Interpreter)
-lh = legend(H,'Exp','FDS 1.25 cm','FDS 0.625 cm','FDS 0.3125 cm');
+lh = legend(H,'Exp','FDS W/dx=4','FDS W/dx=8','FDS W/dx=16');
 set(lh,'FontName',Font_Name,'FontSize',Key_Font_Size,'Interpreter',Font_Interpreter)
 
 % add Git revision if file is available
@@ -101,12 +106,12 @@ TC1 = F1.data(:,find(strcmp(F1.colheaders,'TC_250')));
 yc2 = F2.data(:,find(strcmp(F2.colheaders,'y')));
 TC2 = F2.data(:,find(strcmp(F2.colheaders,'TC_250')));
 
-% yc3 = F3.data(:,find(strcmp(F3.colheaders,'y')));
-% TC3 = F3.data(:,find(strcmp(F3.colheaders,'TC_250')));
+yc3 = F3.data(:,find(strcmp(F3.colheaders,'y')));
+TC3 = F3.data(:,find(strcmp(F3.colheaders,'TC_250')));
 
 H(2) = plot(yc1,TC1,'r-.','LineWidth',Line_Width); % dx = 1.25 cm
 H(3) = plot(yc2,TC2,'m--','LineWidth',Line_Width); % dx = 0.625 cm
-% H(4) = plot(yc3,TC3,'b-','LineWidth',Line_Width);  % dx = 0.3125 cm
+H(4) = plot(yc3,TC3,'b-','LineWidth',Line_Width);  % dx = 0.3125 cm
 
 % % write data to a table file
 % Tbl = table([yc1',TC1']);
@@ -126,7 +131,7 @@ text(xt,yt,'18 % O2, {\it z} = 0.250 m','FontName',Font_Name,'FontSize',Title_Fo
 axis([xmin xmax ymin ymax])
 xlabel('Position (m)','FontName',Font_Name,'FontSize',Label_Font_Size,'Interpreter',Font_Interpreter)
 ylabel('TC Temperature (°C)','FontName',Font_Name,'FontSize',Label_Font_Size,'Interpreter',Font_Interpreter)
-lh=legend(H,'Exp','FDS 1.25 cm','FDS 0.625 cm','FDS 0.3125 cm');
+lh=legend(H,'Exp','FDS W/dx=4','FDS W/dx=8','FDS W/dx=16');
 set(lh,'FontName',Font_Name,'FontSize',Key_Font_Size,'Interpreter',Font_Interpreter)
 
 % add Git revision if file is available
@@ -170,8 +175,12 @@ O2_1 = F1.data(:,find(strcmp(F1.colheaders,'XO2_125')));
 yc2 = F2.data(:,find(strcmp(F2.colheaders,'y')));
 O2_2 = F2.data(:,find(strcmp(F2.colheaders,'XO2_125')));
 
+yc3 = F3.data(:,find(strcmp(F3.colheaders,'y')));
+O2_3 = F3.data(:,find(strcmp(F3.colheaders,'XO2_125')));
+
 H(2) = plot(yc1,O2_1,'r-.','LineWidth',Line_Width); % dx = 1.25 cm
 H(3) = plot(yc2,O2_2,'m--','LineWidth',Line_Width); % dx = 0.625 cm
+H(4) = plot(yc3,O2_3,'b-','LineWidth',Line_Width); % dx = 0.3125 cm
 
 xmin = -0.25;
 xmax = 0.25;
@@ -187,7 +196,7 @@ text(xt,yt,'18 % O2, z=0.125 m','FontName',Font_Name,'FontSize',Title_Font_Size,
 axis([xmin xmax ymin ymax])
 xlabel('Position (m)','FontName',Font_Name,'FontSize',Label_Font_Size,'Interpreter',Font_Interpreter)
 ylabel('O2 (vol frac)','FontName',Font_Name,'FontSize',Label_Font_Size,'Interpreter',Font_Interpreter)
-lh=legend(H,'Exp','FDS 1.25 cm','FDS 0.625 cm','FDS 0.3125 cm','Location','Southwest');
+lh=legend(H,'Exp','FDS W/dx=4','FDS W/dx=8','FDS W/dx=16','Location','Southwest');
 set(lh,'FontName',Font_Name,'FontSize',Key_Font_Size,'Interpreter',Font_Interpreter)
 
 % add Git revision if file is available
@@ -228,12 +237,12 @@ O2_1 = F1.data(:,find(strcmp(F1.colheaders,'XO2_250')));
 yc2 = F2.data(:,find(strcmp(F2.colheaders,'y')));
 O2_2 = F2.data(:,find(strcmp(F2.colheaders,'XO2_250')));
 
-% yc3 = F3.data(:,find(strcmp(F3.colheaders,'y')));
-% O2_3 = F3.data(:,find(strcmp(F3.colheaders,'XO2_250')));
+yc3 = F3.data(:,find(strcmp(F3.colheaders,'y')));
+O2_3 = F3.data(:,find(strcmp(F3.colheaders,'XO2_250')));
 
 H(2) = plot(yc1,O2_1,'r-.','LineWidth',Line_Width); % dx = 1.25 cm
 H(3) = plot(yc2,O2_2,'m--','LineWidth',Line_Width);  % dx = 0.625 cm
-% H(4) = plot(yc3,O2_3,'b-','LineWidth',Line_Width);  % dx = 0.3125 cm
+H(4) = plot(yc3,O2_3,'b-','LineWidth',Line_Width);  % dx = 0.3125 cm
 
 xmin = -0.25;
 xmax = 0.25;
@@ -249,7 +258,7 @@ text(xt,yt,'18 % O2, z=0.250 m','FontName',Font_Name,'FontSize',Title_Font_Size,
 axis([xmin xmax ymin ymax])
 xlabel('Position (m)','FontName',Font_Name,'FontSize',Label_Font_Size,'Interpreter',Font_Interpreter)
 ylabel('O2 (vol frac)','FontName',Font_Name,'FontSize',Label_Font_Size,'Interpreter',Font_Interpreter)
-lh=legend(H,'Exp','FDS 1.25 cm','FDS 0.625 cm','FDS 0.3125 cm','Location','Southwest');
+lh=legend(H,'Exp','FDS W/dx=4','FDS W/dx=8','FDS W/dx=16','Location','Southwest');
 set(lh,'FontName',Font_Name,'FontSize',Key_Font_Size,'Interpreter',Font_Interpreter)
 
 % add Git revision if file is available

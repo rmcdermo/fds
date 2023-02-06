@@ -10,7 +10,7 @@ clear all
 plot_style
 
 expdir = '../../../../../exp/Submodules/macfp-db/Extinction/UMD_Line_Burner/Experimental_Data/';
-outdir = '~/blaze_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/UMD_Line_Burner/IAFSS_2023_Results/PATH_LENGTH/';
+outdir = '~/blaze_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/UMD_Line_Burner/IAFSS_2023_Results/PATH_LENGTH_TRI-3/';
 pltdir = '../Plots/';
 
 exp_fname    = {'CH4_A_Data.csv','C3H8_A_Data.csv'};
