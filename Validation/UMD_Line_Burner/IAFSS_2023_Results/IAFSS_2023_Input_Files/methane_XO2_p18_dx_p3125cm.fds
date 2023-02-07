@@ -1,4 +1,4 @@
-&HEAD CHID='methane_XO2_18_dx_p3125cm', TITLE='UMD Line Burner, methane' /
+&HEAD CHID='methane_XO2_p18_dx_p3125cm', TITLE='UMD Line Burner, methane' /
 
 &MULT ID='m1', DX=0.10625,DY=0.10,DZ=0.10, I_UPPER=7,J_UPPER=1,K_UPPER=9 / 160 meshes
 &MESH IJK=32,32,32, XB=-0.425,-0.31875,-0.10,0.00,-0.0125,0.0875, MULT_ID='m1', COLOR='BLUE'/
