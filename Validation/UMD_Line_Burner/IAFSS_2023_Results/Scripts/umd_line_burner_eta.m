@@ -32,7 +32,7 @@ git_tag_ext  = '_dx_1p25cm_git.txt';
 line_fmt = {'b--','r--','k--',};
 key_fmt  = {'{\it W/dx}=4','{\it W/dx}=8','{\it W/dx}=16'};
 
-i_fuel = 1
+i_fuel = 2
 
 % experimental results
 EXP = importdata([expdir,exp_fname{i_fuel}],',',1);

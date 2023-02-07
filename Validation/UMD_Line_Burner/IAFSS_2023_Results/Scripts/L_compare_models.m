@@ -17,7 +17,7 @@ exp_fname    = {'CH4_A_Data.csv','C3H8_A_Data.csv'};
 fuel_name    = {'methane','propane'};
 Fuel_name    = {'Methane','Propane'};
 fuel_hoc     = [50010.3475,46334.6246]; % from .out file
-git_tag_ext  = '_dx_1p25cm_TRI_0_git.txt';
+git_tag_ext  = '_dx_1p25cm_L_2cm_git.txt';
 
 line_fmt = {'r--','g--','b--','k--'};
 key_fmt  = {'L=2 cm','L=5 cm','L=10 cm','L=20 cm'};

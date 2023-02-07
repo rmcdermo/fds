@@ -9,6 +9,7 @@ clear all
 
 plot_style
 Marker_Size = 10;
+Line_Width=2;
 
 % return
 
@@ -47,9 +48,9 @@ TC2 = F2.data(:,find(strcmp(F2.colheaders,'TC_125')));
 yc3 = F3.data(:,find(strcmp(F3.colheaders,'y')));
 TC3 = F3.data(:,find(strcmp(F3.colheaders,'TC_125')));
 
-H(2) = plot(yc1,TC1,'r-.','LineWidth',Line_Width); % dx = 1.25 cm
-H(3) = plot(yc2,TC2,'m--','LineWidth',Line_Width); % dx = 0.625 cm
-H(4) = plot(yc3,TC3,'b-','LineWidth',Line_Width); % dx = 0.3125 cm
+H(2) = plot(yc1,TC1,'b--','LineWidth',Line_Width); % dx = 1.25 cm
+H(3) = plot(yc2,TC2,'r--','LineWidth',Line_Width); % dx = 0.625 cm
+H(4) = plot(yc3,TC3,'k--','LineWidth',Line_Width); % dx = 0.3125 cm
 
 xmin = -0.25;
 xmax = 0.25;
@@ -109,9 +110,9 @@ TC2 = F2.data(:,find(strcmp(F2.colheaders,'TC_250')));
 yc3 = F3.data(:,find(strcmp(F3.colheaders,'y')));
 TC3 = F3.data(:,find(strcmp(F3.colheaders,'TC_250')));
 
-H(2) = plot(yc1,TC1,'r-.','LineWidth',Line_Width); % dx = 1.25 cm
-H(3) = plot(yc2,TC2,'m--','LineWidth',Line_Width); % dx = 0.625 cm
-H(4) = plot(yc3,TC3,'b-','LineWidth',Line_Width);  % dx = 0.3125 cm
+H(2) = plot(yc1,TC1,'b--','LineWidth',Line_Width); % dx = 1.25 cm
+H(3) = plot(yc2,TC2,'r--','LineWidth',Line_Width); % dx = 0.625 cm
+H(4) = plot(yc3,TC3,'k--','LineWidth',Line_Width);  % dx = 0.3125 cm
 
 % % write data to a table file
 % Tbl = table([yc1',TC1']);
@@ -178,9 +179,9 @@ O2_2 = F2.data(:,find(strcmp(F2.colheaders,'XO2_125')));
 yc3 = F3.data(:,find(strcmp(F3.colheaders,'y')));
 O2_3 = F3.data(:,find(strcmp(F3.colheaders,'XO2_125')));
 
-H(2) = plot(yc1,O2_1,'r-.','LineWidth',Line_Width); % dx = 1.25 cm
-H(3) = plot(yc2,O2_2,'m--','LineWidth',Line_Width); % dx = 0.625 cm
-H(4) = plot(yc3,O2_3,'b-','LineWidth',Line_Width); % dx = 0.3125 cm
+H(2) = plot(yc1,O2_1,'b--','LineWidth',Line_Width); % dx = 1.25 cm
+H(3) = plot(yc2,O2_2,'r--','LineWidth',Line_Width); % dx = 0.625 cm
+H(4) = plot(yc3,O2_3,'k--','LineWidth',Line_Width); % dx = 0.3125 cm
 
 xmin = -0.25;
 xmax = 0.25;
@@ -240,9 +241,9 @@ O2_2 = F2.data(:,find(strcmp(F2.colheaders,'XO2_250')));
 yc3 = F3.data(:,find(strcmp(F3.colheaders,'y')));
 O2_3 = F3.data(:,find(strcmp(F3.colheaders,'XO2_250')));
 
-H(2) = plot(yc1,O2_1,'r-.','LineWidth',Line_Width); % dx = 1.25 cm
-H(3) = plot(yc2,O2_2,'m--','LineWidth',Line_Width);  % dx = 0.625 cm
-H(4) = plot(yc3,O2_3,'b-','LineWidth',Line_Width);  % dx = 0.3125 cm
+H(2) = plot(yc1,O2_1,'b--','LineWidth',Line_Width); % dx = 1.25 cm
+H(3) = plot(yc2,O2_2,'r--','LineWidth',Line_Width);  % dx = 0.625 cm
+H(4) = plot(yc3,O2_3,'k--','LineWidth',Line_Width);  % dx = 0.3125 cm
 
 xmin = -0.25;
 xmax = 0.25;
