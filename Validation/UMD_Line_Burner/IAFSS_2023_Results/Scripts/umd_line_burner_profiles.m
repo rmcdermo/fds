@@ -14,8 +14,8 @@ Line_Width=2;
 % return
 
 expdir = '../../../../../exp/Submodules/macfp-db/Extinction/UMD_Line_Burner/Experimental_Data/';
-% outdir = '../Baseline/';
-outdir = '~/blaze_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/UMD_Line_Burner/IAFSS_2023_Results/Baseline/';
+outdir = '../Baseline/';
+% outdir = '~/blaze_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/UMD_Line_Burner/IAFSS_2023_Results/Baseline/';
 pltdir = '../Plots/';
 
 F1 = importdata([outdir,'methane_XO2_18_dx_1p25cm_line.csv'],',',2);
@@ -124,7 +124,7 @@ ymin = 0;
 ymax = 1200;
 xt = xmin + .03*(xmax-xmin);
 yt = ymin + .92*(ymax-ymin);
-text(xt,yt,'UMD Line Burner, CH4','FontName',Font_Name,'FontSize',Title_Font_Size,'Interpreter',Font_Interpreter)
+text(xt,yt,'UMD Line Burner, Methane','FontName',Font_Name,'FontSize',Title_Font_Size,'Interpreter',Font_Interpreter)
 xt = xmin + .03*(xmax-xmin);
 yt = ymin + .84*(ymax-ymin);
 text(xt,yt,'18 % O2, {\it z} = 0.250 m','FontName',Font_Name,'FontSize',Title_Font_Size,'Interpreter',Font_Interpreter)
@@ -189,7 +189,7 @@ ymin = 0.05;
 ymax = 0.25;
 xt = xmin + .03*(xmax-xmin);
 yt = ymin + .92*(ymax-ymin);
-text(xt,yt,'UMD Line Burner, CH4','FontName',Font_Name,'FontSize',Title_Font_Size,'Interpreter',Font_Interpreter)
+text(xt,yt,'UMD Line Burner, Methane','FontName',Font_Name,'FontSize',Title_Font_Size,'Interpreter',Font_Interpreter)
 xt = xmin + .03*(xmax-xmin);
 yt = ymin + .84*(ymax-ymin);
 text(xt,yt,'18 % O2, z=0.125 m','FontName',Font_Name,'FontSize',Title_Font_Size,'Interpreter',Font_Interpreter)
@@ -251,7 +251,7 @@ ymin = 0.05;
 ymax = 0.25;
 xt = xmin + .03*(xmax-xmin);
 yt = ymin + .92*(ymax-ymin);
-text(xt,yt,'UMD Line Burner, CH4','FontName',Font_Name,'FontSize',Title_Font_Size,'Interpreter',Font_Interpreter)
+text(xt,yt,'UMD Line Burner, Methane','FontName',Font_Name,'FontSize',Title_Font_Size,'Interpreter',Font_Interpreter)
 xt = xmin + .03*(xmax-xmin);
 yt = ymin + .84*(ymax-ymin);
 text(xt,yt,'18 % O2, z=0.250 m','FontName',Font_Name,'FontSize',Title_Font_Size,'Interpreter',Font_Interpreter)
