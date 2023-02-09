@@ -119,7 +119,7 @@ TYPE LAGRANGIAN_PARTICLE_CLASS_TYPE
    INTEGER :: N_STORAGE_REALS=0           !< Number of reals to store for this particle class
    INTEGER :: N_STORAGE_INTEGERS=0        !< Number of integers to store for this particle class
    INTEGER :: N_STORAGE_LOGICALS=0        !< Number of logicals to store for this particle class
-   INTEGER :: NEW_PARTICLE_INCREMENT=50   !< Number of new storage slots to allocate when NPLDIM is exceeded
+   INTEGER :: NEW_PARTICLE_INCREMENT=1000 !< Number of new storage slots to allocate when NPLDIM is exceeded
    INTEGER :: EVAP_MODEL                  !< Evaporation correlation
 
    INTEGER, ALLOCATABLE, DIMENSION(:) :: STRATUM_INDEX_LOWER  !< Lower index of size distribution band
@@ -269,6 +269,7 @@ TYPE INTERNAL_NODE_TYPE
                                          ALTERNATE_WALL_TYPE,ALTERNATE_WALL_IOR
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: ALTERNATE_WALL_WEIGHT
    INTEGER :: ALTERNATE_WALL_COUNT=0
+   INTEGER :: I=-1,J=-1,K=-1,MESH_NUMBER=-1
 END TYPE INTERNAL_NODE_TYPE
 
 
