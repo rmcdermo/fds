@@ -1,4 +1,4 @@
-&HEAD CHID='Cup_methane_CO2_16pct',TITLE='Methane Cup Burner, CO2 above MEC'/
+&HEAD CHID='Cup_methane_CO2_18pct',TITLE='Methane Cup Burner, CO2 below MEC=20.4 % by mass '/
 
 ! &MESH XB=0,0.04,0.0,0.001,0.05,0.200,IJK=40,1,150,CYLINDRICAL=.TRUE./
 
@@ -32,8 +32,8 @@
 ! &SURF ID='INFLOW',VEL=-0.12,SPEC_ID='OXYGEN',MASS_FRACTION=0.23/
 &SURF ID='INFLOW',
       MASS_FLUX(1)=0.1440, SPEC_ID(1)='AIR',
-      MASS_FLUX(2)=0.02743, SPEC_ID(2)='CARBON DIOXIDE'
-      TAU_MF(1:2)=0,0 / 16% agent by mass
+      MASS_FLUX(2)=0.03161, SPEC_ID(2)='CARBON DIOXIDE'
+      TAU_MF(1:2)=0,0 / 18% agent by mass
 
 &SURF ID='BURNER',VEL=-0.01,SPEC_ID(1)='METHANE',MASS_FRACTION(1)=1.,TAU_MF(1)=0./
 
