@@ -13,7 +13,7 @@
 
 &CLIP MINIMUM_DENSITY=0.01/
 
-&INIT XB=0.0082,0.01,0.0000,0.0010,0.0025,0.0050,HRRPUV=1E5,RAMP_Q='R'/
+&INIT XB=0.0075,0.01,0.0000,0.0010,0.0025,0.0050,HRRPUV=1E5,RAMP_Q='R'/
 
 &RAMP ID='R',T=0.00,F=0/
 &RAMP ID='R',T=0.05,F=1/
@@ -62,8 +62,8 @@
       TAU_V=0.01,
       RAMP_PART='RAMP PMF'/ mdot"_p = mdot"_a/(100/MEC - 1) where MEC=4.2 mass % for NaHCO3 with propane fuel
 
-&RAMP ID='RAMP PMF',T=0.1,F=0/
-&RAMP ID='RAMP PMF',T=0.2,F=1/
+&RAMP ID='RAMP PMF',T=0.3,F=0/
+&RAMP ID='RAMP PMF',T=0.4,F=1/
 
 &SURF ID='NaHCO3'
       MATL_ID = 'Sodium Bicarbonate'
