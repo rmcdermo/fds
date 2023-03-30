@@ -1,0 +1,230 @@
+&MATL ID               = 'Sodium Bicarbonate'
+      FYI              = 'NaHCO3'
+      EMISSIVITY       = 1.0
+      DENSITY          = 2200.
+      CONDUCTIVITY     = 0.2
+      SPECIFIC_HEAT    = 1.044
+      N_REACTIONS      = 1
+      A(1)             = 1.1E11
+      E(1)             = 105800
+      N_S(1)           = 1
+      HEAT_OF_REACTION(1) = 762.6
+      MATL_ID(1,1)     = 'Sodium Carbonate I'
+      NU_MATL(1,1)     = 0.63083
+      SPEC_ID(1:2,1)   = 'WATER VAPOR','CARBON DIOXIDE'
+      NU_SPEC(1:2,1)   = 0.10723,0.26194/
+
+&MATL ID               = 'Sodium Carbonate I'
+      FYI              = 'Na2CO3'
+      DENSITY          = 2540.
+      EMISSIVITY       = 1.0
+      CONDUCTIVITY     = 0.2
+      SPECIFIC_HEAT_RAMP  = 'Cp_Na2CO3 I'
+      N_REACTIONS      = 2
+      A(1)             = 1E20
+      E(1)             = 307970
+      N_S(1)           = 1
+      MATL_ID(1,1)     = 'Sodium Carbonate II'
+      NU_MATL(1,1)     = 1
+      HEAT_OF_REACTION(1) = 6.51014
+      A(2)             = 9.54E10
+      E(2)             = 273284
+      N_S(2)           = 1
+      MATL_ID(1,2)     = 'Sodium Oxide Gamma'
+      NU_MATL(1,2)     = 0.58477
+      SPEC_ID(1,2)     = 'CARBON DIOXIDE'
+      NU_SPEC(1,2)     = 0.41523
+      HEAT_OF_REACTION(2) = 2852.58/
+
+&MATL ID               = 'Sodium Carbonate II'
+      FYI              = 'Na2CO3'
+      DENSITY          = 2540.
+      EMISSIVITY       = 1.0
+      CONDUCTIVITY     = 0.2
+      SPECIFIC_HEAT_RAMP  = 'Cp_Na2CO3 II'
+      N_REACTIONS      = 2
+      A(1)             = 1E32
+      E(1)             = 736104
+      N_S(1)           = 1
+      MATL_ID(1,1)     = 'Sodium Carbonate Liquid'
+      NU_MATL(1,1)     = 1
+      HEAT_OF_REACTION(1) = 279.880
+      A(2)             = 9.54E10
+      E(2)             = 273284
+      N_S(2)           = 1
+      MATL_ID(1,2)     = 'Sodium Oxide Gamma'
+      NU_MATL(1,2)     = 0.58477
+      SPEC_ID(1,2)     = 'CARBON DIOXIDE'
+      NU_SPEC(1,2)     = 0.41523
+      HEAT_OF_REACTION(2) = 2859.10/
+
+
+&MATL ID               = 'Sodium Carbonate Liquid'
+      FYI              = 'Na2CO3'
+      DENSITY          = 2540.
+      EMISSIVITY       = 1.0
+      CONDUCTIVITY     = 0.2
+      SPECIFIC_HEAT_RAMP  = 'Cp_Na2CO3 Liquid'
+      N_REACTIONS      = 1
+      A(1)             = 9.54E10
+      E(1)             = 273284
+      N_S(1)           = 1
+      MATL_ID(1,1)     = 'Sodium Oxide Gamma'
+      NU_MATL(1,1)     = 0.58477
+      SPEC_ID(1,1)     = 'CARBON DIOXIDE'
+      NU_SPEC(1,1)     = 0.41523
+      HEAT_OF_REACTION(1) = 3138.99/
+
+https://janaf.nist.gov/
+
+&RAMP ID='Cp_Na2CO3 I', T=26.850,F=1.0497/
+&RAMP ID='Cp_Na2CO3 I', T=126.850,F=1.1803/
+&RAMP ID='Cp_Na2CO3 I', T=226.850,F=1.3418/
+&RAMP ID='Cp_Na2CO3 I', T=326.850,F=1.5408/
+&RAMP ID='Cp_Na2CO3 I', T=426.850,F=1.7697/
+&RAMP ID='Cp_Na2CO3 I', T=526.850,F=1.4468/
+&RAMP ID='Cp_Na2CO3 I', T=626.850,F=1.5684/
+&RAMP ID='Cp_Na2CO3 I', T=726.850,F=1.6908/
+&RAMP ID='Cp_Na2CO3 I', T=826.850,F=1.8120/
+&RAMP ID='Cp_Na2CO3 I', T=926.850,F=1.7883/
+
+&RAMP ID='Cp_Na2CO3 II', T=26.850,F=1.0497/
+&RAMP ID='Cp_Na2CO3 II', T=126.850,F=1.1803/
+&RAMP ID='Cp_Na2CO3 II', T=226.850,F=1.3418/
+&RAMP ID='Cp_Na2CO3 II', T=326.850,F=1.5408/
+&RAMP ID='Cp_Na2CO3 II', T=426.850,F=1.7697/
+&RAMP ID='Cp_Na2CO3 II', T=526.850,F=1.4468/
+&RAMP ID='Cp_Na2CO3 II', T=626.850,F=1.5684/
+&RAMP ID='Cp_Na2CO3 II', T=726.850,F=1.6908/
+&RAMP ID='Cp_Na2CO3 II', T=826.850,F=1.8120/
+&RAMP ID='Cp_Na2CO3 II', T=926.850,F=1.7883/
+
+&RAMP ID='Cp_Na2CO3 Liquid', T=26.850,F=1.0497/
+&RAMP ID='Cp_Na2CO3 Liquid', T=126.850,F=1.1803/
+&RAMP ID='Cp_Na2CO3 Liquid', T=226.850,F=1.3418/
+&RAMP ID='Cp_Na2CO3 Liquid', T=326.850,F=1.5408/
+&RAMP ID='Cp_Na2CO3 Liquid', T=426.850,F=1.7697/
+&RAMP ID='Cp_Na2CO3 Liquid', T=526.850,F=1.4468/
+&RAMP ID='Cp_Na2CO3 Liquid', T=626.850,F=1.5684/
+&RAMP ID='Cp_Na2CO3 Liquid', T=726.850,F=1.6908/
+&RAMP ID='Cp_Na2CO3 Liquid', T=826.850,F=1.8120/
+&RAMP ID='Cp_Na2CO3 Liquid', T=926.850,F=1.7883/
+
+Option 1: Na2O (s) + H2O -->  2NaOH
+&MATL ID               = 'Sodium Oxide Gamma'
+      FYI              = 'Na2O'
+      EMISSIVITY       = 1.0
+      DENSITY          = 2270.
+      CONDUCTIVITY     = 0.2
+      SPECIFIC_HEAT_RAMP    = 'Cp_Na2O Gamma'
+      N_REACTIONS      = 1
+      A(1)             = 1E40
+      E(1)             = 824682.
+      MATL_ID(1:2,1)   = 'Sodium Oxide Beta'
+      NU_MATL(1:2,1)   = 1
+      HEAT_OF_REACTION(1) = 28.36 /
+
+&MATL ID               = 'Sodium Oxide Beta'
+      FYI              = 'Na2O'
+      EMISSIVITY       = 1.0
+      DENSITY          = 2270.
+      CONDUCTIVITY     = 0.2
+      SPECIFIC_HEAT_RAMP    = 'Cp_Na2O Beta'
+      N_REACTIONS      = 2
+      A(1)             = 1E50
+      E(1)             = 1240042.
+      MATL_ID(1:2,1)   = 'Sodium Oxide Alpha'
+      NU_MATL(1:2,1)   = 1
+      HEAT_OF_REACTION(1) = 192.39
+      A(2)             = 3.47E12
+      E(2)             = 401598.5
+      SPEC_ID(1:2,2)   = 'WATER VAPOR','SODIUM HYDROXIDE'
+      NU_SPEC(1:2,2)   = -0.290668,1.290668
+      HEAT_OF_REACTION(2) = 3860.75/
+
+&MATL ID               = 'Sodium Oxide Alpha'
+      FYI              = 'Na2O'
+      EMISSIVITY       = 1.0
+      DENSITY          = 2270.
+      CONDUCTIVITY     = 0.2
+      SPECIFIC_HEAT_RAMP    = 'Cp_Na2O Alpha'
+      N_REACTIONS      = 2
+      A(1)             = 1.E60
+      E(1)             = 1669305.
+      MATL_ID(1:2,1)   = 'Sodium Oxide Liquid'
+      NU_MATL(1:2,1)   = 1
+      HEAT_OF_REACTION(1) = 769.57
+      A(2)             = 3.47E12
+      E(2)             = 401598.5
+      SPEC_ID(1:2,2)   = 'WATER VAPOR','SODIUM HYDROXIDE'
+      NU_SPEC(1:2,2)   = -0.290668,1.290668
+      HEAT_OF_REACTION(2) = 3668.36/
+
+&MATL ID               = 'Sodium Oxide Liquid'
+      FYI              = 'Na2O'
+      EMISSIVITY       = 1.0
+      DENSITY          = 2270.
+      CONDUCTIVITY     = 0.2
+      SPECIFIC_HEAT_RAMP    = 'Cp_Na2O Liquid'
+      N_REACTIONS      = 1
+      A(1)             = 3.47E12
+      E(1)             = 401598.5
+      SPEC_ID(1:2,1)   = 'WATER VAPOR','SODIUM HYDROXIDE'
+      NU_SPEC(1:2,1)   = -0.290668,1.290668
+      HEAT_OF_REACTION(1) = 2898.79/
+
+&RAMP ID='Cp_Na2O Gamma', T=26.850,F=1.1172/
+&RAMP ID='Cp_Na2O Gamma', T=126.850,F=1.2226/
+&RAMP ID='Cp_Na2O Gamma', T=226.850,F=1.3149/
+&RAMP ID='Cp_Na2O Gamma', T=326.850,F=1.3829/
+&RAMP ID='Cp_Na2O Gamma', T=426.850,F=1.4336/
+&RAMP ID='Cp_Na2O Gamma', T=526.850,F=1.4729/
+&RAMP ID='Cp_Na2O Gamma', T=626.850,F=1.5048/
+&RAMP ID='Cp_Na2O Gamma', T=726.850,F=1.5315/
+&RAMP ID='Cp_Na2O Gamma', T=826.850,F=1.5546/
+&RAMP ID='Cp_Na2O Gamma', T=926.850,F=1.5752/
+&RAMP ID='Cp_Na2O Gamma', T=1026.850,F=1.5939/
+&RAMP ID='Cp_Na2O Gamma', T=1126.850,F=1.6112/
+&RAMP ID='Cp_Na2O Gamma', T=1226.850,F=1.6877/
+
+&RAMP ID='Cp_Na2O Beta', T=26.850,F=1.1172/
+&RAMP ID='Cp_Na2O Beta', T=126.850,F=1.2226/
+&RAMP ID='Cp_Na2O Beta', T=226.850,F=1.3149/
+&RAMP ID='Cp_Na2O Beta', T=326.850,F=1.3829/
+&RAMP ID='Cp_Na2O Beta', T=426.850,F=1.4336/
+&RAMP ID='Cp_Na2O Beta', T=526.850,F=1.4729/
+&RAMP ID='Cp_Na2O Beta', T=626.850,F=1.5048/
+&RAMP ID='Cp_Na2O Beta', T=726.850,F=1.5315/
+&RAMP ID='Cp_Na2O Beta', T=826.850,F=1.5546/
+&RAMP ID='Cp_Na2O Beta', T=926.850,F=1.5752/
+&RAMP ID='Cp_Na2O Beta', T=1026.850,F=1.5939/
+&RAMP ID='Cp_Na2O Beta', T=1126.850,F=1.6112/
+&RAMP ID='Cp_Na2O Beta', T=1226.850,F=1.6877/
+
+&RAMP ID='Cp_Na2O Alpha', T=26.850,F=1.1172/
+&RAMP ID='Cp_Na2O Alpha', T=126.850,F=1.2226/
+&RAMP ID='Cp_Na2O Alpha', T=226.850,F=1.3149/
+&RAMP ID='Cp_Na2O Alpha', T=326.850,F=1.3829/
+&RAMP ID='Cp_Na2O Alpha', T=426.850,F=1.4336/
+&RAMP ID='Cp_Na2O Alpha', T=526.850,F=1.4729/
+&RAMP ID='Cp_Na2O Alpha', T=626.850,F=1.5048/
+&RAMP ID='Cp_Na2O Alpha', T=726.850,F=1.5315/
+&RAMP ID='Cp_Na2O Alpha', T=826.850,F=1.5546/
+&RAMP ID='Cp_Na2O Alpha', T=926.850,F=1.5752/
+&RAMP ID='Cp_Na2O Alpha', T=1026.850,F=1.5939/
+&RAMP ID='Cp_Na2O Alpha', T=1126.850,F=1.6112/
+&RAMP ID='Cp_Na2O Alpha', T=1226.850,F=1.6877/
+
+&RAMP ID='Cp_Na2O Liquid', T=26.850,F=1.1172/
+&RAMP ID='Cp_Na2O Liquid', T=126.850,F=1.2226/
+&RAMP ID='Cp_Na2O Liquid', T=226.850,F=1.3149/
+&RAMP ID='Cp_Na2O Liquid', T=326.850,F=1.3829/
+&RAMP ID='Cp_Na2O Liquid', T=426.850,F=1.4336/
+&RAMP ID='Cp_Na2O Liquid', T=526.850,F=1.4729/
+&RAMP ID='Cp_Na2O Liquid', T=626.850,F=1.5048/
+&RAMP ID='Cp_Na2O Liquid', T=726.850,F=1.5315/
+&RAMP ID='Cp_Na2O Liquid', T=826.850,F=1.5546/
+&RAMP ID='Cp_Na2O Liquid', T=926.850,F=1.5752/
+&RAMP ID='Cp_Na2O Liquid', T=1026.850,F=1.5939/
+&RAMP ID='Cp_Na2O Liquid', T=1126.850,F=1.6112/
+&RAMP ID='Cp_Na2O Liquid', T=1226.850,F=1.6877/
