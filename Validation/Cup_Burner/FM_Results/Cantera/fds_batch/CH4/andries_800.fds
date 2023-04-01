@@ -1,0 +1,284 @@
+&CHID ID='andries_800'/
+
+&MESH IJK=4,1,4,XB=0.000,0.004,0.000,0.001,0.000,0.004/
+
+&MISC STRATIFICATION=F,SIMULATION_MODE='DNS'/
+
+&TIME T_END=2/
+
+&RADI RADIATION=F/
+&SURF ID='DEF',DEFAULT=T,ADIABATIC=T/
+&SLCF QUANTITY='TEMPERATURE',CELL_CENTERED=T,PBY=0.0005/
+
+&COMB ZZ_MIN_GLOBAL=1E-15,INITIAL_UNMIXED_FRACTION=0,ODE_SOLVER='RK2 RICHARDSON',RICHARDSON_ERROR_TOLERANCE=1.E-7,MAX_CHEMISTRY_SUBSTEPS=500/
+
+&INIT XB=0.000,0.004,0.000,0.001,0.000,0.004,
+      TEMPERATURE=800,
+      SPEC_ID='OXYGEN','PROPANE',
+      MASS_FRACTION=0.218947,0.060344/
+
+&SPEC ID='NITROGEN',BACKGROUND=T/N2
+&SPEC ID='OXYGEN'/O2
+&SPEC ID='HYDROGEN'/H2
+&SPEC ID='WATER VAPOR'/H2O
+&SPEC ID='HYDROXYL RADICAL'/OH
+&SPEC ID='HYDROPEROXY RADICAL'/HO2
+&SPEC ID='HYDROGEN ATOM'/H
+&SPEC ID='OXYGEN ATOM'/P
+&SPEC ID='PROPANE'/C3H8
+&SPEC ID='ISOPROPYL RADICAL'/iC3H7
+&SPEC ID='PROPYLENE'/C3H6
+&SPEC ID='ETHYLENE'/C2H4
+&SPEC ID='VINYL RADICAL'/C2H3
+&SPEC ID='ACETYLENE'/C2H2
+&SPEC ID='ETHYNYL RADICAL'/C2H
+&SPEC ID='ETHYNYLOXY RADICAL'/CHCO
+&SPEC ID='METHYL RADICAL'/CH3
+&SPEC ID='METHYLENE'/CH
+&SPEC ID='FORMALDEHYDE'/HCHO
+&SPEC ID='FORMYL RADICAL'/HCO
+&SPEC ID='CARBON MONOXIDE'/CO
+&SPEC ID='CARBON DIOXIDE'/CO2
+&SPEC ID='SODIUM HYDROXIDE'/NaOH
+&SPEC ID='SODIUM'/Na
+&SPEC ID='SODIUM OXIDE'/NaO
+
+&REAC ID  = 'R1',
+      A          = 2.E14,
+      E          = 70300.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'OXYGEN','HYDROGEN ATOM','HYDROXYL RADICAL','OXYGEN ATOM',
+      NU         = -1,-1,1,1/
+&REAC ID         = 'R2',
+      A          = 5.06E4,
+      E          = 26300.,
+      N_T        = 2.67,
+      SPEC_ID_NU = 'HYDROGEN','OXYGEN ATOM','HYDROXYL RADICAL','HYDROGEN ATOM',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R3',
+      A          = 1.E8,
+      E          = 13800.,
+      N_T        = 1.60,
+      SPEC_ID_NU = 'HYDROGEN','HYDROXYL RADICAL','WATER VAPOR','HYDROGEN ATOM',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R4 (R3R)',
+      A          = 2.29E9,
+      E          = 76650.88,
+      N_T        = 1.40,
+      SPEC_ID_NU = 'HYDROGEN','HYDROXYL RADICAL','WATER VAPOR','HYDROGEN ATOM',
+      NU         =  1, 1,-1,-1/
+&REAC ID         = 'R5',
+      THIRD_BODY = T
+      A          = 4.58E19,
+      E          = 436809.6,
+      N_T        = -1.40,
+      SPEC_ID_NU = 'HYDROGEN','HYDROGEN ATOM',
+      NU         = -1, 2/
+&REAC ID         = 'R6',
+      THIRD_BODY = T
+      A          = 4.42E17,
+      E          = 497477.6,
+      N_T        = -0.63,
+      SPEC_ID_NU = 'OXYGEN','OXYGEN ATOM',
+      NU         = -1, 2/
+&REAC ID         = 'R7 (R6R)',
+      THIRD_BODY = T
+      A          = 6.17E15,
+      E          = 0.,
+      N_T        = -0.50,
+      SPEC_ID_NU = 'OXYGEN','OXYGEN ATOM',
+      NU         =  1,-2/
+&REAC ID         = 'R8',
+      THIRD_BODY = T
+      A          = 4.71E18,
+      E          = 0.,
+      N_T        = -1.00,
+      SPEC_ID_NU = 'OXYGEN ATOM','HYDROGEN ATOM','HYDROXYL RADICAL',
+      NU         = -1,-1, 1/
+&REAC ID         = 'R9',
+      A          = 3.E13,
+      E          = 7200.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'HYDROPEROXY RADICAL','HYDROGEN ATOM','WATER VAPOR','OXYGEN ATOM',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R10',
+      THIRD_BODY = T
+      A          = 3.09E12,
+      E          = 204472.1,
+      N_T        = 0.52,
+      SPEC_ID_NU = 'HYDROPEROXY RADICAL','HYDROGEN ATOM','OXYGEN',
+      NU         = -1, 1, 1/
+&REAC ID         = 'R11',
+      A          = 1.66E13,
+      E          = 3443.432,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'HYDROPEROXY RADICAL','HYDROGEN ATOM','HYDROGEN','OXYGEN',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R12',
+      A          = 1.97E10,
+      E          = -1374.026,
+      N_T        = 0.96,
+      SPEC_ID_NU = 'HYDROPEROXY RADICAL','HYDROXYL RADICAL','WATER VAPOR','OXYGEN',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R13',
+      THIRD_BODY = T
+      A          = 1.8E18,
+      E          = 0.0,
+      N_T        = -1.00,
+      SPEC_ID_NU = 'HYDROGEN ATOM','HYDROGEN',
+      NU         = -2, 1/
+&REAC ID         = 'R14',
+      A          = 4.40E6,
+      E          = -3100,
+      N_T        = 1.50,
+      SPEC_ID_NU = 'CARBON MONOXIDE','HYDROXYL RADICAL','CARBON DIOXIDE','HYDROGEN ATOM',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R15',
+      A          = 7.58E12,
+      E          = 1715.44,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'FORMYL RADICAL','OXYGEN','CARBON MONOXIDE','HYDROPEROXY RADICAL',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R16',
+      A          = 5.74E7,
+      E          = 11464.16,
+      N_T        = 1.90,
+      SPEC_ID_NU = 'FORMALDEHYDE','HYDROGEN ATOM','FORMYL RADICAL','HYDROGEN',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R17',
+      A          = 6.50E12,
+      E          = 6300.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'METHYLENE','OXYGEN','CARBON MONOXIDE','HYDROGEN ATOM','HYDROXYL RADICAL',
+      NU         = -1,-1, 1, 1, 1/
+&REAC ID         = 'R18',
+      A          = 6.50E12,
+      E          = 6300.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'METHYLENE','OXYGEN','CARBON DIOXIDE','HYDROGEN ATOM',
+      NU         = -1,-1, 1, 2/
+&REAC ID         = 'R19',
+      A          = 1.8E14,
+      E          = 63000,
+      N_T        = 0.0,
+      SPEC_ID_NU = 'METHYL RADICAL','HYDROGEN ATOM','METHYLENE','HYDROGEN',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R20',
+      A          = 3.4E11,
+      E          = 37400,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'METHYL RADICAL','OXYGEN','FORMALDEHYDE','HYDROXYL RADICAL',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R21',
+      A          = 1.E14,
+      E          = 0.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'ETHYNYLOXY RADICAL','OXYGEN ATOM','CARBON MONOXIDE','HYDROGEN ATOM',
+      NU         = -1,-1, 2, 1/
+&REAC ID         = 'R22',
+      A          = 5.E13,
+      E          = 3600.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'ETHYNYL RADICAL','OXYGEN','ETHYNYLOXY RADICAL','OXYGEN ATOM',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R23',
+      A          = 1.E13,
+      E          = 29300.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'ACETYLENE','HYDROXYL RADICAL','ETHYNYL RADICAL','WATER VAPOR',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R24',
+      A          = 2.E14,
+      E          = 166290.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'VINYL RADICAL','ACETYLENE','HYDROGEN ATOM',
+      NU         = -1, 1, 1/
+&REAC ID         = 'R25',
+      A          = 1.6E9,
+      E          = 3100,
+      N_T        = 1.20,
+      SPEC_ID_NU = 'ETHYLENE','OXYGEN ATOM','METHYL RADICAL','CARBON MONOXIDE','HYDROGEN ATOM',
+      NU         = -1,-1, 1, 1, 1/
+&REAC ID         = 'R26',
+      A          = 3.E13,
+      E          = 12600.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'ETHYLENE','HYDROXYL RADICAL','VINYL RADICAL','WATER VAPOR',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R27',
+      A          = 5.07E7,
+      E          = 54182.8,
+      N_T        = 1.93,
+      SPEC_ID_NU = 'ETHYLENE','HYDROGEN ATOM','VINYL RADICAL','HYDROGEN',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R28',
+      A          = 8.56E6,
+      E          = 765.672,
+      N_T        = 1.88,
+      SPEC_ID_NU = 'ETHYLENE','OXYGEN ATOM','METHYL RADICAL','FORMYL RADICAL',
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R29',
+      A          = 2.73E62,
+      E          = 515468.8,
+      N_T        = -13.3,
+      SPEC_ID_NU = 'PROPYLENE','VINYL RADICAL','METHYL RADICAL',
+      NU         = -1, 1, 1/
+&REAC ID         = 'R30',
+      A          = 6.30E13,
+      E          = 154500.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'ISOPROPYL RADICAL','ETHYLENE','METHYL RADICAL'
+      NU         = -1, 1, 1/
+&REAC ID         = 'R31',
+      A          = 1.E12,
+      E          = 20900.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'ISOPROPYL RADICAL','OXYGEN','PROPYLENE','HYDROPEROXY RADICAL'
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R32',
+      A          = 4.E13,
+      E          = 199000.,
+      N_T        = 0.00,
+      SPEC_ID_NU = 'PROPANE','OXYGEN','ISOPROPYL RADICAL','HYDROPEROXY RADICAL'
+      NU         = -1,-1, 1, 1/
+&REAC ID         = 'R33',
+      A          = 1.05E10,
+      E          = 6635.824,
+      N_T        = 0.97,
+      SPEC_ID_NU = 'PROPANE','HYDROXYL RADICAL','ISOPROPYL RADICAL','WATER VAPOR'
+      NU         = -1,-1, 1, 1/
+
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='NITROGEN',ID='N2'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='OXYGEN',ID='O2'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='HYDROGEN',ID='H2'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='WATER VAPOR',ID='H2O'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='HYDROXYL RADICAL',ID='OH'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='HYDROPEROXY RADICAL',ID='HO2'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='HYDROGEN ATOM',ID='H'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='OXYGEN ATOM',ID='O'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='PROPANE',ID='C3H8'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='ISOPROPYL RADICAL',ID='iC3H7'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='PROPYLENE',ID='C3H6'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='ETHYLENE',ID='C2H4'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='VINYL RADICAL',ID='C2H3'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='ACETYLENE',ID='C2H2'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='ETHYNYL RADICAL',ID='C2H'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='ETHYNYLOXY RADICAL',ID='CHCO'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='METHYL RADICAL',ID='CH3'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='METHYLENE',ID='CH'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='FORMALDEHYDE',ID='HCHO'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='FORMYL RADICAL',ID='HCO'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='CARBON MONOXIDE',ID='CO'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION', SPEC_ID='CARBON DIOXIDE',ID='CO2'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION',SPEC_ID='SODIUM',ID='Na'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION',SPEC_ID='SODIUM HYDROXIDE',ID='NaOH'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='VOLUME FRACTION',SPEC_ID='SODIUM OXIDE',ID='NaO'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='CHEMISTRY SUBITERATIONS',ID='CHEM'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='TEMPERATURE',ID='T'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='HRRPUV',ID='Q'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='PRESSURE',ID='P'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='ENTHALPY',ID='H'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='INTERNAL ENERGY',ID='U'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='DENSITY',ID='R'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='MOLECULAR WEIGHT',ID='W'/
+&DEVC XYZ=0.002,0.0005,0.002, QUANTITY='SPECIFIC HEAT',ID='C'/
