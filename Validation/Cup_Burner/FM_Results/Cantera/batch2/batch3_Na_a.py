@@ -105,7 +105,7 @@ ax.set_ylabel('Mole fraction (mol/mol)')
 plt.savefig("plots/1000G2Na.pdf")
 plt.close()
 
-ig, ax = plt.subplots()
+fig, ax = plt.subplots()
 ax.plot(times,X[:,gas.species_index("NAOH")],'ro',markevery=20,mfc='none',label='Ct NaOH')
 ax.plot(fds1000_data.loc[:,'Time'],fds1000_data.loc[:,'NaOH'],'r-',label='FDS NaOH')
 ax.plot(times,X[:,gas.species_index("NA")],'go',markevery=20,mfc='none',label='Ct Na')
