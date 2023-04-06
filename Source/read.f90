@@ -9941,15 +9941,12 @@ MESH_LOOP: DO NM=1,NMESHES
                   ENDIF
                ENDDO EMBED_LOOP
 
-               IF (EMBEDDED) THEN
-                  IF (DEVC_ID=='null' .AND. CTRL_ID=='null' .AND. PERMIT_HOLE .AND. REMOVABLE) THEN
-                     N = N-1
-                     N_OBST= N_OBST-1
-                     CYCLE I_MULT_LOOP
-                  ELSEIF ((DEVC_ID/='null'.OR.CTRL_ID/='null') .AND. (OB2%DEVC_ID/='null'.OR.OB2%CTRL_ID/='null')) THEN
-                     WRITE(MESSAGE,'(4A)')  'ERROR: ',TRIM(ID),' is embedded within ',TRIM(OB2%ID)
-                     CALL SHUTDOWN(MESSAGE,PROCESS_0_ONLY=.FALSE.) ; RETURN
-                  ENDIF
+               ! Remove obstructions that are within another and have no controls or devices
+
+               IF (EMBEDDED .AND. DEVC_ID=='null' .AND. CTRL_ID=='null' .AND. PERMIT_HOLE .AND. REMOVABLE) THEN
+                  N = N-1
+                  N_OBST= N_OBST-1
+                  CYCLE I_MULT_LOOP
                ENDIF
 
                ! Check if the SURF IDs exist
@@ -11549,6 +11546,17 @@ INIT_LOOP: DO N=1,N_INIT_READ+N_INIT_RESERVED
          DX = (DV2%X-DV%X)/REAL(N_PARTICLES-1,EB)
          DY = (DV2%Y-DV%Y)/REAL(N_PARTICLES-1,EB)
          DZ = (DV2%Z-DV%Z)/REAL(N_PARTICLES-1,EB)
+      ENDIF
+   ENDIF
+
+   ! Check if domain information is provided for particle INIT
+   IF (PART_ID/='null') THEN
+      IF (ALL(ABS(XB)>1.E5_EB) .AND. ALL(XYZ<-1.E5_EB) .AND. DB=='null' .AND. BULK_DENSITY_FILE=='null' .AND. &
+         (TRIM(PATH_RAMP(1))=='null' .OR. TRIM(PATH_RAMP(2))=='null' .OR. TRIM(PATH_RAMP(3))=='null')) THEN
+            WRITE(MESSAGE,'(A,I0,A,A)') 'ERROR: Problem with INIT number ',N,&
+            '. XYZ, XB, DB, or PATH_RAMP must be specified with PART_ID'
+            CALL SHUTDOWN(MESSAGE) ; RETURN
+         !ENDIF
       ENDIF
    ENDIF
 
