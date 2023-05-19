@@ -55,6 +55,8 @@ TYPE MESH_TYPE
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:) :: STRAIN_RATE !< Strain rate \f$ |S|_{ijk} \f$ (1/s)
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:) :: D_Z_MAX     !< \f$ \max D_\alpha \f$
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:) :: Q_DOT_PPP_S !< Heat release rate per unit volume in 3D pyrolysis model
+   REAL(EB), ALLOCATABLE, DIMENSION(:,:,:) :: TMP_FLAME   !< Flame temperature (K) (experimental)
+   REAL(EB), ALLOCATABLE, DIMENSION(:,:,:) :: VOL_FRAC_FLAME !< Flame volume fraction (experimental)
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:) :: PP_RESIDUAL !< Pressure Poisson residual (debug)
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:) :: LES_FILTER_WIDTH !< Characteristic cell dimension (m)
 
@@ -71,6 +73,7 @@ TYPE MESH_TYPE
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:,:) :: AVG_DROP_RAD     !< Average radius for a certain droplet type
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:,:) :: AVG_DROP_AREA    !< Average area for a certain droplet type
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:,:) :: M_DOT_PPP        !< Mass source term, \f$ \dot{m}_{\alpha,ijk}''' \f$
+   REAL(EB), ALLOCATABLE, DIMENSION(:,:,:,:) :: TRI_COR
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:,:) :: ADV_FX
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:,:) :: ADV_FY
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:,:) :: ADV_FZ
@@ -341,11 +344,13 @@ IMPLICIT NONE (TYPE,EXTERNAL)
 REAL(EB), POINTER, DIMENSION(:,:,:) :: &
    U,V,W,US,VS,WS,DDDT,D,DS,H,HS,KRES,FVX,FVY,FVZ,FVX_B,FVY_B,FVZ_B,FVX_D,FVY_D,FVZ_D,RHO,RHOS, &
    MU,MU_DNS,TMP,Q,KAPPA_GAS,CHI_R,QR,QR_W,UII,RSUM,D_SOURCE, &
-   CSD2,MTR,MSR,WEM,MIX_TIME,CHEM_SUBIT,STRAIN_RATE,D_Z_MAX,Q_DOT_PPP_S,PP_RESIDUAL,LES_FILTER_WIDTH
+   CSD2,MTR,MSR,WEM,MIX_TIME,CHEM_SUBIT,STRAIN_RATE,D_Z_MAX,Q_DOT_PPP_S,PP_RESIDUAL,LES_FILTER_WIDTH, &
+   TMP_FLAME,VOL_FRAC_FLAME
 REAL(EB), POINTER, DIMENSION(:,:,:,:) :: ZZ,ZZS,REAC_SOURCE_TERM,DEL_RHO_D_DEL_Z,FX,FY,FZ, &
                                          SCALAR_WORK1,SCALAR_WORK2,SCALAR_WORK3,SCALAR_WORK4, &
                                          Q_REAC,AVG_DROP_DEN,AVG_DROP_TMP,AVG_DROP_RAD,AVG_DROP_AREA,M_DOT_PPP, &
-                                         ADV_FX,ADV_FY,ADV_FZ,DIF_FX,DIF_FY,DIF_FZ,DIF_FXS,DIF_FYS,DIF_FZS
+                                         ADV_FX,ADV_FY,ADV_FZ,DIF_FX,DIF_FY,DIF_FZ,DIF_FXS,DIF_FYS,DIF_FZS, &
+                                         TRI_COR
 REAL(EB), POINTER :: POIS_PTB,POIS_ERR
 REAL(EB), POINTER, DIMENSION(:) :: SAVE1,SAVE2,WORK
 REAL(EB), POINTER, DIMENSION(:,:,:) :: PRHS
@@ -514,6 +519,9 @@ QR=>M%QR
 QR_W=>M%QR_W
 KAPPA_GAS=>M%KAPPA_GAS
 UII=>M%UII
+TMP_FLAME=>M%TMP_FLAME
+VOL_FRAC_FLAME=>M%VOL_FRAC_FLAME
+TRI_COR=>M%TRI_COR
 PP_RESIDUAL=>M%PP_RESIDUAL
 LES_FILTER_WIDTH=>M%LES_FILTER_WIDTH
 M_DOT_PPP=>M%M_DOT_PPP
