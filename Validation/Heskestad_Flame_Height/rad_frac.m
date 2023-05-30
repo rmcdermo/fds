@@ -10,7 +10,7 @@ figure
 set(gca,'Units',Plot_Units)
 set(gca,'Position',[Plot_X Plot_Y Plot_Width Plot_Height])
 
-datadir = '/Volumes/rmcdermo-1/GitHub/FireModels_rmcdermo/fds/Validation/Heskestad_Flame_Height/Test_TRI_Model/';
+datadir = '/Users/rmcdermo/burn_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/Heskestad_Flame_Height/Test_2step/';
 listing = dir([datadir 'Qs*_hrr.csv']);
 
 for i=1:length(listing)
