@@ -23,7 +23,7 @@ git_tag_ext  = '_dx_1p25cm_git.txt';
 line_fmt = {'r--','g--','b--'};
 key_fmt  = {'{\it W/dx}=4','{\it W/dx}=8','{\it W/dx}=16'};
 
-i_fuel = 2
+i_fuel = 1
 
 % experimental results
 EXP = importdata([expdir,exp_fname{i_fuel}],',',1);
@@ -36,13 +36,13 @@ S_eta = EXP.data(:,find(strcmp(EXP.colheaders,'S_eta')));
 
 row_start = 5;
 
-HRR1 = importdata([outdir,fuel_name{i_fuel},'_dx_1p25cm_hrr.csv'],',',2);
+HRR1 = importdata([outdir,fuel_name{i_fuel},'_dx_2p5cm_hrr.csv'],',',2);
 HRR2 = importdata([outdir,fuel_name{i_fuel},'_dx_1p25cm_hrr.csv'],',',2);
-HRR3 = importdata([outdir,fuel_name{i_fuel},'_dx_1p25cm_hrr.csv'],',',2);
+HRR3 = importdata([outdir,fuel_name{i_fuel},'_dx_p625cm_hrr.csv'],',',2);
 
-DEV1 = importdata([outdir,fuel_name{i_fuel},'_dx_1p25cm_devc.csv'],',',2);
+DEV1 = importdata([outdir,fuel_name{i_fuel},'_dx_2p5cm_devc.csv'],',',2);
 DEV2 = importdata([outdir,fuel_name{i_fuel},'_dx_1p25cm_devc.csv'],',',2);
-DEV3 = importdata([outdir,fuel_name{i_fuel},'_dx_1p25cm_devc.csv'],',',2);
+DEV3 = importdata([outdir,fuel_name{i_fuel},'_dx_p625cm_devc.csv'],',',2);
 
 Time_FDS_1 = DEV1.data(row_start:end,find(strcmp(DEV1.colheaders,'Time')));
 Time_FDS_2 = DEV2.data(row_start:end,find(strcmp(DEV2.colheaders,'Time')));
