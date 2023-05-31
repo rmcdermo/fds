@@ -89,12 +89,16 @@ figure
 set(gca,'Units',Plot_Units)
 set(gca,'Position',[Plot_X Plot_Y Plot_Width Plot_Height])
 
-steel_blue = [0 0.447 0.741];
-H(1)=plot(XO2,eta,'.','MarkerSize',10); hold on
-set(H(1),'Color',steel_blue)
+% steel_blue = [0 0.447 0.741];
+% H(1)=plot(XO2,eta,'.','MarkerSize',10); hold on
+% set(H(1),'Color',steel_blue)
+% subr= 1:10:length(XO2);
+% h=errorbar(XO2(subr),eta(subr),-S_eta(subr),S_eta(subr),-S_XO2(subr),S_XO2(subr),'.','MarkerSize',10); hold on
+% set(h,'Color',steel_blue)
+
+H(1)=plot(XO2,eta,'ko','MarkerSize',5,'LineWidth',1.5); hold on
 subr= 1:10:length(XO2);
-h=errorbar(XO2(subr),eta(subr),-S_eta(subr),S_eta(subr),-S_XO2(subr),S_XO2(subr),'.','MarkerSize',10); hold on
-set(h,'Color',steel_blue)
+h=errorbar(XO2(subr),eta(subr),-S_eta(subr),S_eta(subr),-S_XO2(subr),S_XO2(subr),'ko','MarkerSize',5); hold on
 
 H(2)=plot(XO2_FDS_1,eta_FDS_1,line_fmt{1},'LineWidth',2);
 H(3)=plot(XO2_FDS_2,eta_FDS_2,line_fmt{2},'LineWidth',2);
@@ -127,7 +131,7 @@ figure
 clear H
 set(gca,'Units',Plot_Units)
 set(gca,'Position',[Plot_X Plot_Y Plot_Width Plot_Height])
-H(1)=plot(XO2,Chi_R,'ko','MarkerSize',5); hold on
+H(1)=plot(XO2,Chi_R,'ko','MarkerSize',5,'LineWidth',1.5); hold on
 
 H(2)=plot(XO2_FDS_1,GLOB_CHI_R_1,line_fmt{1},'LineWidth',2);
 H(3)=plot(XO2_FDS_2,GLOB_CHI_R_2,line_fmt{2},'LineWidth',2);
