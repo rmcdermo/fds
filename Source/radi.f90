@@ -3800,6 +3800,10 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
 
    ENDIF WIDE_BAND_MODEL_IF
 
+   ! Turbulence-Radiation Interaction (TRI) model (under construction)
+
+   IF (TRI_MODEL) KFST4_GAS = KFST4_GAS * TRI_COR(:,:,:,IBND)
+
    ! Add contribution to source term from a user-specified volumetric heat release rate
 
    IF (INIT_HRRPUV) CALL ADD_VOLUMETRIC_HEAT_SOURCE(1)
@@ -3835,10 +3839,6 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          ENDDO
       ENDDO SLOOP
    ENDIF
-
-   ! Turbulence-Radiation Interaction (TRI) model (under construction)
-
-   IF (TRI_MODEL) KFST4_GAS = KFST4_GAS * TRI_COR(:,:,:,IBND)
 
    ! Calculate extinction coefficient
 
