@@ -10,7 +10,7 @@ figure
 set(gca,'Units',Plot_Units)
 set(gca,'Position',[Plot_X Plot_Y Plot_Width Plot_Height])
 
-datadir = '/Users/rmcdermo/burn_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/Heskestad_Flame_Height/Test_2step/';
+datadir = '/Users/rmcdermo/burn_home/rmcdermo/GitHub/FireModels_rmcdermo/fds/Validation/Heskestad_Flame_Height/Test_TRI-3/';
 listing = dir([datadir 'Qs*_hrr.csv']);
 
 for i=1:length(listing)
@@ -33,8 +33,10 @@ for i=1:length(listing)
     HRR = M.data(:,2);
     Q_RADI = -M.data(:,3);
 
+    % close gcf
     % plot(t,HRR); hold on
     % plot(t,Q_RADI)
+    % pause
 
     CHI_R = mean(Q_RADI(q_range))/mean(HRR(q_range));
 
@@ -46,7 +48,7 @@ for i=1:length(listing)
 
 end
 
-axis([0.1 1e4 0 0.4])
+axis([0.1 1e4 0 0.5])
 
 xlabel('\itQ*' ,'Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
 ylabel('\chi_r','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)

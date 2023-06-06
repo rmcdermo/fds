@@ -2,7 +2,7 @@
 
 # This script runs a set of Validation Cases on a Linux machine with a batch queuing system.
 # See the file Validation/Common_Run_All.sh for more information.
-export INDIR=`pwd`/Test_2step_TRI
+export INDIR=`pwd`/Test_TRI-3
 export QFDS=$FIREMODELS/fds/Utilities/Scripts/qfds.sh
 
 $QFDS -d $INDIR Qs=10000_RI=05.fds
@@ -39,11 +39,11 @@ $QFDS -d $INDIR Qs=p1_RI=10.fds
 $QFDS -d $INDIR Qs=p2_RI=10.fds
 $QFDS -d $INDIR Qs=p5_RI=10.fds
 
-$QFDS -b randy.mcdermott@gmail.com -d $INDIR Qs=10000_RI=20.fds
+$QFDS -d $INDIR Qs=10000_RI=20.fds
 $QFDS -d $INDIR Qs=1000_RI=20.fds
 $QFDS -d $INDIR Qs=100_RI=20.fds
 $QFDS -d $INDIR Qs=10_RI=20.fds
-$QFDS -b randy.mcdermott@gmail.com -d $INDIR Qs=1_RI=20.fds
+$QFDS -d $INDIR Qs=1_RI=20.fds
 $QFDS -d $INDIR Qs=2000_RI=20.fds
 $QFDS -d $INDIR Qs=200_RI=20.fds
 $QFDS -d $INDIR Qs=20_RI=20.fds

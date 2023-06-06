@@ -2,10 +2,10 @@
 
 # This script runs a set of Validation Cases on a Linux machine with a batch queuing system.
 # See the file Validation/Common_Run_All.sh for more information.
-export INDIR=`pwd`/Thermally_Thick_Burner
+export INDIR=`pwd`/AIT_ZONE_2
 export QFDS=$FIREMODELS/fds/Utilities/Scripts/qfds.sh
 export EMAIL=randall.mcdermott@nist.gov
-export QUEUE=batch2
+export QUEUE=batch
 
 $QFDS -b $EMAIL -p 14 -q $QUEUE -d $INDIR methane_dx_2p5cm.fds
 $QFDS -b $EMAIL -p 14 -q $QUEUE -d $INDIR propane_dx_2p5cm.fds
