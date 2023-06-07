@@ -563,26 +563,13 @@ TRI_COR_OUT = 1._EB
 TMP_FLAME_OUT = TMP_IN
 TMP_FLAME_IF: IF (TRI_MODEL .AND. Q_OUT>TWO_EPSILON_EB) THEN
 
-   CALL GET_FLAME_TEMPERATURE(TMP_FLAME_LOC,PHI_TILDE,ZZ_FLAME,ZZ_0,ZZ_MIXED,TMP_IN)
+   CALL GET_FLAME_TEMPERATURE__OLD(TMP_FLAME_LOC,PHI_TILDE,ZZ_FLAME,ZZ_0,ZZ_MIXED,TMP_IN)
 
    ! ***** flame volume method ******
-
-   SELECT CASE(FLAME_VOLUME_METHOD)
-      CASE(1)
-         ! method 1 (flame volume from unmixed fraction)
-         R1=>REACTION(1)
-         IF (PHI_TILDE<1._EB) THEN
-            ZETA_FLAME = (1._EB-ZETA)*(ZZ_0(R1%FUEL_SMIX_INDEX) + PHI_TILDE*(1._EB-ZZ_0(R1%FUEL_SMIX_INDEX)))
-         ELSE
-            ZETA_FLAME = (1._EB-ZETA)*(ZZ_0(R1%AIR_SMIX_INDEX) + 1._EB/PHI_TILDE*(1._EB-ZZ_0(R1%AIR_SMIX_INDEX)))
-         ENDIF
-      CASE(2)
-         ! method 2 (flame volume from heat release rate [should be consistent])
-         CALL GET_ENTHALPY(ZZ_0,H_IN,TMP_IN)
-         CALL GET_ENTHALPY(ZZ_MIXED,H_FLAME,TMP_FLAME_LOC)
-         ! fraction of mass in the cell raised to TMP_FLAME_LOC by Q_OUT
-         ZETA_FLAME = MAX(0._EB, MIN(1._EB, Q_OUT*DT / (H_FLAME-H_IN) / RHO_IN ))
-   END SELECT
+   CALL GET_ENTHALPY(ZZ_0,H_IN,TMP_IN)
+   CALL GET_ENTHALPY(ZZ_FLAME,H_FLAME,TMP_FLAME_LOC)
+   ! fraction of mass in the cell raised to TMP_FLAME_LOC by Q_OUT
+   ZETA_FLAME = MAX(0._EB, MIN(1._EB, Q_OUT*DT / (H_FLAME-H_IN) / RHO_IN ))
 
    ! convert to volume fraction
    CALL GET_MOLECULAR_WEIGHT(ZZ_0,MW_0)
@@ -611,7 +598,7 @@ TMP_FLAME_IF: IF (TRI_MODEL .AND. Q_OUT>TWO_EPSILON_EB) THEN
             CASE(3)
                ! TRI_3 (T self + kappa self + T-kappa cross)
                KAPPA_0     = GET_KAPPA(ZZ_0,TMP_IN,IBND)
-               KAPPA_FLAME = GET_KAPPA(ZZ_MIXED,TMP_FLAME_LOC,IBND)
+               KAPPA_FLAME = GET_KAPPA(ZZ_FLAME,TMP_FLAME_LOC,IBND)
          END SELECT
 
          TRI_NUMER = (1._EB-VOL_FRAC_FLAME_LOC)*KAPPA_0*TMP_IN**4 + VOL_FRAC_FLAME_LOC*KAPPA_FLAME*TMP_FLAME_LOC**4
@@ -1179,6 +1166,120 @@ ENDIF
 END FUNCTION IS_AIR
 
 END SUBROUTINE GET_FLAME_TEMPERATURE
+
+
+SUBROUTINE GET_FLAME_TEMPERATURE__OLD(TMP_FLAME_OUT,PHI_TILDE,ZZ_HAT,ZZ_0,ZZ_IN,TMP_IN)
+
+! Compute adiabatic flame temperature for reaction mixture
+
+USE PHYSICAL_FUNCTIONS, ONLY: GET_ENTHALPY
+REAL(EB),INTENT(IN) :: TMP_IN,ZZ_0(1:N_TRACKED_SPECIES),ZZ_IN(1:N_TRACKED_SPECIES)
+REAL(EB),INTENT(OUT) :: TMP_FLAME_OUT,ZZ_HAT(1:N_TRACKED_SPECIES),PHI_TILDE
+REAL(EB) :: H_0,TMP_1,TMP_2,H_1,H_2,H_REL_ERROR,ZZ_HAT_0(1:N_TRACKED_SPECIES)
+INTEGER :: NS,ITER
+REAL(EB), PARAMETER :: ERROR_TOL=0.01_EB, TMPMAX_FLAME=5000._EB
+INTEGER, PARAMETER :: MAXIT=10
+TYPE(REACTION_TYPE), POINTER :: R1=>NULL()
+
+TMP_FLAME_OUT = TMP_IN
+ZZ_HAT = ZZ_IN
+PHI_TILDE = 0._EB
+
+IF (.NOT.REACTION(1)%FAST_CHEMISTRY) RETURN
+R1 => REACTION(1)
+
+! This construct for the equivalence ratio does not rely on a single reaction
+
+IF (ZZ_IN(R1%AIR_SMIX_INDEX)>TWO_EPSILON_EB) THEN
+   ! Excess AIR
+   PHI_TILDE = (ZZ_0(R1%AIR_SMIX_INDEX) - ZZ_IN(R1%AIR_SMIX_INDEX)) / MAX( ZZ_0(R1%AIR_SMIX_INDEX), TWO_EPSILON_EB )
+ELSE
+   ! Excess FUEL
+   PHI_TILDE = ZZ_0(R1%FUEL_SMIX_INDEX) / MAX( (ZZ_0(R1%FUEL_SMIX_INDEX) - ZZ_IN(R1%FUEL_SMIX_INDEX)), TWO_EPSILON_EB )
+ENDIF
+
+IF ( PHI_TILDE < TWO_EPSILON_EB ) THEN
+   PHI_TILDE = 0._EB
+   RETURN
+ELSEIF ( (1._EB/PHI_TILDE) < TWO_EPSILON_EB ) THEN
+   PHI_TILDE = 0._EB
+   RETURN
+ENDIF
+
+! Define the stoichiometric pre and post mixtures (ZZ_HAT_0 and ZZ_HAT).
+
+IF (PHI_TILDE<1._EB) THEN
+   ! Excess AIR
+   DO NS=1,N_TRACKED_SPECIES
+      IF (NS==R1%FUEL_SMIX_INDEX) THEN
+         ZZ_HAT_0(NS) = ZZ_0(NS)
+         ZZ_HAT(NS)   = 0._EB
+      ELSEIF (NS==R1%AIR_SMIX_INDEX) THEN
+         ZZ_HAT_0(NS) = PHI_TILDE * ZZ_0(NS)
+         ZZ_HAT(NS)   = 0._EB
+      ELSE  ! Products
+         ZZ_HAT_0(NS) = PHI_TILDE * ZZ_0(NS)
+         ZZ_HAT(NS)   = ZZ_IN(NS) - (1._EB - PHI_TILDE) * ZZ_0(NS)
+      ENDIF
+   ENDDO
+ELSE
+   ! Excess FUEL
+   DO NS=1,N_TRACKED_SPECIES
+      IF (NS==R1%FUEL_SMIX_INDEX) THEN
+         ZZ_HAT_0(NS) = 1._EB/PHI_TILDE * ZZ_0(NS)
+         ZZ_HAT(NS)   = 0._EB
+      ELSEIF (NS==R1%AIR_SMIX_INDEX) THEN
+         ZZ_HAT_0(NS) = ZZ_0(NS)
+         ZZ_HAT(NS)   = 0._EB
+      ELSE  ! Products
+         ZZ_HAT_0(NS) = 1._EB/PHI_TILDE * ZZ_0(NS)
+         ZZ_HAT(NS)   = ZZ_IN(NS) - (1._EB - 1._EB/PHI_TILDE) * ZZ_0(NS)
+      ENDIF
+   ENDDO
+ENDIF
+
+! Normalize the modified pre and post mixtures
+
+IF (SUM(ZZ_HAT_0)<TWO_EPSILON_EB) THEN
+   ZZ_HAT = ZZ_IN
+   PHI_TILDE = 0._EB
+   RETURN
+ELSE
+   ZZ_HAT_0 = ZZ_HAT_0/SUM(ZZ_HAT_0)
+ENDIF
+IF (SUM(ZZ_HAT)<TWO_EPSILON_EB) THEN
+   ZZ_HAT = ZZ_IN
+   PHI_TILDE = 0._EB
+   RETURN
+ELSE
+   ZZ_HAT = ZZ_HAT/SUM(ZZ_HAT)
+ENDIF
+
+! Iteratively guess (Newton method) flame temp until products enthalpy matches reactant enthalpy.
+
+CALL GET_ENTHALPY(ZZ_HAT_0,H_0,TMP_IN) ! H of reactants participating in reaction (includes chemical enthalpy)
+TMP_1 = 2000._EB ! converges faster with better initial guess (only takes 2 or 3 iterations)
+TMP_2 = 2100._EB
+TMP_FLAME_OUT = TMP_2
+ITER = 0
+H_REL_ERROR = 1._EB
+DO WHILE (ABS(H_REL_ERROR)>ERROR_TOL)
+   ITER = ITER + 1
+   IF (ITER>MAXIT) EXIT
+
+   CALL GET_ENTHALPY(ZZ_HAT,H_1,TMP_1)
+   CALL GET_ENTHALPY(ZZ_HAT,H_2,TMP_2)
+
+   IF (ABS(H_2-H_1)>TWO_EPSILON_EB) THEN
+      TMP_FLAME_OUT = TMP_1 + (TMP_2-TMP_1)/(H_2-H_1) * (H_0-H_1)
+      TMP_FLAME_OUT = MAX(TMPMIN,MIN(TMPMAX_FLAME,TMP_FLAME_OUT))
+   ENDIF
+   H_REL_ERROR = (H_2-H_0)/H_0 ! converged when enthalpy relative error less than 1%
+   TMP_1 = TMP_2
+   TMP_2 = TMP_FLAME_OUT
+ENDDO
+
+END SUBROUTINE GET_FLAME_TEMPERATURE__OLD
 
 
 SUBROUTINE COMBUSTION_BC(NM)
