@@ -156,8 +156,8 @@ DO K=1,KBAR
                IF (TRI_MODEL) THEN
                   TMP_FLAME(I,J,K) = TMP_FLAME_TMP
                   VOL_FRAC_FLAME(I,J,K) = VOL_FRAC_FLAME_TMP
+                  TRI_COR(I,J,K,1:NUMBER_SPECTRAL_BANDS) = TRI_COR_TMP(1:NUMBER_SPECTRAL_BANDS)
                ENDIF
-               IF (TRI_MODEL) TRI_COR(I,J,K,1:NUMBER_SPECTRAL_BANDS) = TRI_COR_TMP(1:NUMBER_SPECTRAL_BANDS)
             ENDIF
             ! Divergence term
             CALL GET_SPECIFIC_HEAT(ZZ_GET,CP,TMP(I,J,K))
