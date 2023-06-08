@@ -17,16 +17,16 @@ Lf_dt  = 10;
 
 plot_style
 
-%expdir = '../../../../../exp/Submodules/macfp-db/Extinction/UMD_Line_Burner/Experimental_Data/';
-expdir = 'D:\TRI\macfp-db-master\macfp-db-master\Extinction\UMD_Line_Burner\Experimental_Data\';
-% outdir = '../Baseline/';
-outdir = 'D:\TRI\UMD\Final_version\TRI0_Final\Current_Results\';
+expdir = '../../../../../exp/Submodules/macfp-db/Extinction/UMD_Line_Burner/Experimental_Data/';
+% expdir = 'D:\TRI\macfp-db-master\macfp-db-master\Extinction\UMD_Line_Burner\Experimental_Data\';
+outdir = '../RE_update/';
+% outdir = 'D:\TRI\UMD\Final_version\TRI0_Final\Current_Results\';
 %'D:\TRI\UMD\Final_version\TRI0_Final\Current_Results\' %TRI0
 %D:\TRI\UMD\Final_version\TRI-3\Current_Results %TRI3
 %D:\TRI\UMD\Final_version\Baseline\Baseline %Baseline
 %D:\TRI\UMD\Final_version\TRI0_AIT_ZONE_2 %TRI_0 with AIT
-%pltdir = '../Plots/';
-pltdir = 'D:\TRI\UMD\Final_version\Scripts';
+pltdir = '../Plots2/';
+% pltdir = 'D:\TRI\UMD\Final_version\Scripts';
 
 exp_fname    = {'CH4_A_Data.csv','C3H8_A_Data.csv'};
 exp_Lf_fname = {'CH4_A_Lf_Data.csv','C3H8_A_Lf_Data.csv'};
@@ -36,7 +36,7 @@ fuel_hoc     = [50010.3475,46334.6246]; % from .out file
 git_tag_ext  = '_dx_1p25cm_git.txt';
 
 line_fmt = {'b--','r--','k--',};
-key_fmt  = {'{\it W/dx}=4','{\it W/dx}=8','{\it W/dx}=16'};
+key_fmt  = {'{\itW/dx}=4','{\itW/dx}=8','{\itW/dx}=16'};
 
 i_fuel =1
 
@@ -419,29 +419,30 @@ Pick_O2_bias
 % Figure that explains the RMSU and bias
 figure(6)
 clear H
-H(1)=plot(XO2,Chi_R,'ko')
+H(1)=plot(XO2,Chi_R,'ko','MarkerSize',5,'LineWidth',1.25)
 hold on
 H(2)=plot(pw_ramp_XO2,pw_ramp_chir,LineWidth=2);
-H(3)=plot(XO2_FDS_1,GLOB_CHI_R_1,'b:','LineWidth',2);
-H(4)=plot(XO2_FDS_2,GLOB_CHI_R_2,'r:','LineWidth',2); 
-H(5)=plot(XO2_FDS_3,GLOB_CHI_R_3,'k:','LineWidth',2);
+H(3)=plot(XO2_FDS_1,GLOB_CHI_R_1,line_fmt{1},'LineWidth',2);
+H(4)=plot(XO2_FDS_2,GLOB_CHI_R_2,line_fmt{2},'LineWidth',2);
+H(5)=plot(XO2_FDS_3,GLOB_CHI_R_3,line_fmt{3},'LineWidth',2);
 H(6)=plot(XO2_FDS_1,GLOB_CHI_mean,LineWidth=2);
 %line_fmt{1}
 axis([0.10 0.21 0 0.35 ]);
-    xlabel('O2 (vol frac)','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
-    ylabel('\chi_R','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
-    text(0.105,0.325,[Fuel_name{i_fuel},' Radiative Fraction'],'FontName',Font_Name,'FontSize',Title_Font_Size)
-    set(gca,'FontName',Font_Name);
-    set(gca,'FontSize',Label_Font_Size);
-   % legend('EXP','Linear fit',)
-    lh=legend(H,'Exp','Exp. Fit',key_fmt{:},'Mean curve','Location','SouthEast');
-    set(lh,'FontName',Font_Name,'FontSize',Key_Font_Size)
-    git_file=[outdir,fuel_name{i_fuel},git_tag_ext];
-    addverstr(gca,git_file,'linear');
+xlabel('O2 (vol frac)','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
+ylabel('\chi_R','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
+text(0.105,0.325,[Fuel_name{i_fuel},' Radiative Fraction'],'FontName',Font_Name,'FontSize',Title_Font_Size)
+set(gca,'FontName',Font_Name);
+set(gca,'FontSize',Label_Font_Size);
+% legend('EXP','Linear fit',)
+lh=legend(H,'Exp','Exp Fit',key_fmt{:},'Mean curve','Location','SouthEast');
+set(lh,'FontName',Font_Name,'FontSize',Key_Font_Size)
+git_file=[outdir,fuel_name{i_fuel},git_tag_ext];
+addverstr(gca,git_file,'linear');
 
-    set(gcf,'Visible',Figure_Visibility);
-    set(gcf,'Units',Paper_Units);
-    set(gcf,'PaperUnits',Paper_Units);
-    set(gcf,'PaperSize',[Paper_Width Paper_Height]);
-    set(gcf,'Position',[0 0 Paper_Width Paper_Height]);
-    print(gcf,'-dpdf',[pltdir,fuel_name{i_fuel},'_Metric']);
+set(gcf,'Visible',Figure_Visibility);
+set(gcf,'Units',Paper_Units);
+set(gcf,'PaperUnits',Paper_Units);
+set(gcf,'PaperSize',[Paper_Width Paper_Height]);
+set(gcf,'Position',[0 0 Paper_Width Paper_Height]);
+print(gcf,'-dpdf',[pltdir,fuel_name{i_fuel},'_Metric']);
+
