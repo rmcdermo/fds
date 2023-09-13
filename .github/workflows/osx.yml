@@ -4,12 +4,12 @@ name: github-osx
 on:
   push:
     paths:
-    - .github/osx.yml
+    - .github/workflows/osx.yml
     - Build/**
     - Source/**
   pull_request:
     paths:
-    - .github/osx.yml
+    - .github/workflows/osx.yml
     - Build/**
     - Source/**
 

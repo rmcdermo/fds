@@ -4,12 +4,12 @@ name: github-linux
 on:
   push:
     paths:
-    - .github/linux.yml
+    - .github/workflows/linux.yml
     - Build/**
     - Source/**
   pull_request:
     paths:
-    - .github/linux.yml
+    - .github/workflows/linux.yml
     - Build/**
     - Source/**
 
