@@ -98,6 +98,8 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: fds_impi_intel_linux
+
+    - name: run a case
       run: |
         ./fds_impi_intel_linux
 
