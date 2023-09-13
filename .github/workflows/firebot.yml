@@ -70,19 +70,27 @@ jobs:
         cd ./Build/impi_intel_linux_db
         sh ./make_fds.sh
         ./fds_impi_intel_linux_db
-    - name: build fds release
-      run: |
-        source /opt/intel/oneapi/setvars.sh
-        cd ./Build/impi_intel_linux
-        sh ./make_fds.sh
-        ./fds_impi_intel_linux
 
-    - name: upload artifact
+    - name: upload fds debug
       uses: actions/upload-artifact@v3
       with:
-        name: fds_impi_intel_linux
-        path: $GITHUB_WORKSPACE/Build/impi_intel_linux/fds_impi_intel_linux
+        name: fds_impi_intel_linux_db
+        path: $GITHUB_WORKSPACE/Build/impi_intel_linux_db/fds_impi_intel_linux_db
         retention-days: 1
+
+    # - name: build fds release
+    #   run: |
+    #     source /opt/intel/oneapi/setvars.sh
+    #     cd ./Build/impi_intel_linux
+    #     sh ./make_fds.sh
+    #     ./fds_impi_intel_linux
+
+    # - name: upload fds release
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: fds_impi_intel_linux
+    #     path: $GITHUB_WORKSPACE/Build/impi_intel_linux/fds_impi_intel_linux
+    #     retention-days: 1
 
   run-verification:
     # build on ubuntu using ifort with intelmpi and mkl based on
@@ -102,8 +110,8 @@ jobs:
 
     - name: run a case
       run: |
-        cd ./Build/impi_intel_linux
-        ./fds_impi_intel_linux
+        cd ./Build/impi_intel_linux_db
+        ./fds_impi_intel_linux_db
 
 
 
