@@ -81,7 +81,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: fds_impi_intel_linux
-        path: ./fds_impi_intel_linux
+        path: $GITHUB_WORKSPACE/Build/impi_intel_linux/fds_impi_intel_linux
         retention-days: 1
 
   run-verification:
@@ -102,6 +102,7 @@ jobs:
 
     - name: run a case
       run: |
+        cd ./Build/impi_intel_linux
         ./fds_impi_intel_linux
 
 
