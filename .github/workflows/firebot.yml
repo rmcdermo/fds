@@ -3,6 +3,8 @@ name: github-firebot
 
 on:
   push:
+    branches:
+    - github-firebot
     paths:
     - .github/firebot.yml
     - Build/**
