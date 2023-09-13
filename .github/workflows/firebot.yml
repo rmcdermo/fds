@@ -90,6 +90,7 @@ jobs:
 
     name: run verification
     runs-on: [ubuntu-latest]
+    needs: compile-fds
 
     steps:
     - uses: actions/checkout@v4
