@@ -25,11 +25,11 @@ permissions:
   contents: read
 
 jobs:
-  linux-intel-intelmpi:
+  compile-fds:
     # build on ubuntu using ifort with intelmpi and mkl based on
     # https://github.com/oneapi-src/oneapi-ci
 
-    name: linux intel intelmpi
+    name: compile fds
     runs-on: [ubuntu-latest]
 
     steps:
@@ -75,6 +75,30 @@ jobs:
         source /opt/intel/oneapi/setvars.sh
         cd ./Build/impi_intel_linux
         sh ./make_fds.sh
+        ./fds_impi_intel_linux
+
+    - name: upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: fds_impi_intel_linux
+        path: ./fds_impi_intel_linux
+        retention-days: 1
+
+  run-verification:
+    # build on ubuntu using ifort with intelmpi and mkl based on
+    # https://github.com/oneapi-src/oneapi-ci
+
+    name: run verification
+    runs-on: [ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: download a single artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: fds_impi_intel_linux
+      run: |
         ./fds_impi_intel_linux
 
 
