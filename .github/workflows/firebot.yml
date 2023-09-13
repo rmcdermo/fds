@@ -2,6 +2,11 @@ name: github-firebot
 
 
 on:
+  push:
+    paths:
+    - .github/firebot.yml
+    - Build/**
+    - Source/**
   schedule:
     # run every night at midnight EST (4:00 am UTC)
     # * is a special character in YAML so you have to quote this string

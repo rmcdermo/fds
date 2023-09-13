@@ -4,12 +4,12 @@ name: github-windows
 on:
   push:
     paths:
-    - .github/**
+    - .github/windows.yml
     - Build/**
     - Source/**
   pull_request:
     paths:
-    - .github/**
+    - .github/windows.yml
     - Build/**
     - Source/**
 
