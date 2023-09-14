@@ -70,13 +70,12 @@ jobs:
         cd ./Build/impi_intel_linux_db
         sh ./make_fds.sh
         ./fds_impi_intel_linux_db
-        pwd
 
     - name: upload fds debug
       uses: actions/upload-artifact@v3
       with:
         name: fds_impi_intel_linux_db
-        path: $GITHUB_WORKSPACE/../Build/impi_intel_linux_db/fds_impi_intel_linux_db
+        path: $GITHUB_WORKSPACE/Build/impi_intel_linux_db
         retention-days: 1
 
     # - name: build fds release
