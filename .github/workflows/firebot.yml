@@ -107,6 +107,7 @@ jobs:
     - name: download a single artifact
       uses: actions/download-artifact@v3
       with:
+        path: /home/runner/work/fds/fds/Build/impi_intel_linux_db
         name: fds_impi_intel_linux_db
 
     - name: run a case
