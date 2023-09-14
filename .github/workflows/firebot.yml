@@ -70,6 +70,7 @@ jobs:
         cd ./Build/impi_intel_linux_db
         sh ./make_fds.sh
         ./fds_impi_intel_linux_db
+        echo $GITHUB_WORKSPACE
 
     - name: upload fds debug
       uses: actions/upload-artifact@v3
