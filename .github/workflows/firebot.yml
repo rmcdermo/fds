@@ -70,8 +70,8 @@ jobs:
         cd ./Build/impi_intel_linux_db
         sh ./make_fds.sh
         ./fds_impi_intel_linux_db
-        cd $GITHUB_WORKSPACE/Verification/Fires
-        $GITHUB_WORKSPACE/Build/impi_intel_linux_db/fds_impi_intel_linux_db simple_test.fds
+    # cd $GITHUB_WORKSPACE/Verification/Fires
+    # $GITHUB_WORKSPACE/Build/impi_intel_linux_db/fds_impi_intel_linux_db simple_test.fds
 
     # - name: build fds release
     #   run: |
@@ -82,8 +82,9 @@ jobs:
 
     - name: run a case
       run: |
+        source /opt/intel/oneapi/setvars.sh
         cd $GITHUB_WORKSPACE/Verification/Fires
-        $GITHUB_WORKSPACE/Build/impi_intel_linux_db/fds_impi_intel_linux_db simple_test.fds
+        $GITHUB_WORKSPACE/Build/impi_intel_linux_db/fds_impi_intel_linux_db tmp_lower_limit_default.fds
 
 
 
