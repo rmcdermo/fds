@@ -79,8 +79,8 @@ jobs:
 
     - name: run a case
       run: |
-        cd Verification/Fires
-        Build/impi_intel_linux_db/fds_impi_intel_linux_db simple_test.fds
+        cd $GITHUB_WORKSPACE/Verification/Fires
+        $GITHUB_WORKSPACE/Build/impi_intel_linux_db/fds_impi_intel_linux_db simple_test.fds
 
 
 
