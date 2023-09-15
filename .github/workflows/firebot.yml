@@ -80,7 +80,8 @@ jobs:
     - name: run a case
       run: |
         cd $GITHUB_WORKSPACE/Verification/Fires
-        $GITHUB_WORKSPACE/Build/impi_intel_linux_db/fds_impi_intel_linux_db simple_test.fds
+        export OMP_NUM_THREADS=1
+        mpiexec -n 1 $GITHUB_WORKSPACE/Build/impi_intel_linux_db/fds_impi_intel_linux_db simple_test.fds
 
 
 
