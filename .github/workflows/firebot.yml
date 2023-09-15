@@ -10,9 +10,9 @@ on:
       - Build/**
       - Source/**
   schedule:
-    # run every night at midnight EST (4:00 am UTC)
+    # run every night at 12:30am EST (4:30 am UTC)
     # * is a special character in YAML so you have to quote this string
-    - cron: '0 4 * * *'
+    - cron: '30 4 * * *'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,15 +21,15 @@ on:
 #   group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.ref }}
 #   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# permissions:
-#   contents: read
+permissions:
+  contents: read
 
 jobs:
-  compile-fds:
+  build-run:
     # build on ubuntu using ifort with intelmpi and mkl based on
     # https://github.com/oneapi-src/oneapi-ci
 
-    name: compile fds
+    name: compile and run fds
     runs-on: [ubuntu-latest]
 
     steps:
@@ -70,15 +70,6 @@ jobs:
         cd ./Build/impi_intel_linux_db
         sh ./make_fds.sh
         ./fds_impi_intel_linux_db
-
-    - name: upload fds debug
-      uses: actions/upload-artifact@v3
-      with:
-        name: fds_impi_intel_linux_db
-        path: /home/runner/work/fds/fds/Build/impi_intel_linux_db/fds_impi_intel_linux_db
-        retention-days: 1
-        if-no-files-found: error
-
     # - name: build fds release
     #   run: |
     #     source /opt/intel/oneapi/setvars.sh
@@ -86,36 +77,10 @@ jobs:
     #     sh ./make_fds.sh
     #     ./fds_impi_intel_linux
 
-    # - name: upload fds release
-    #   uses: actions/upload-artifact@v3
-    #   with:
-    #     name: fds_impi_intel_linux
-    #     path: $GITHUB_WORKSPACE/Build/impi_intel_linux/fds_impi_intel_linux
-    #     retention-days: 1
-
-  run-verification:
-    # build on ubuntu using ifort with intelmpi and mkl based on
-    # https://github.com/oneapi-src/oneapi-ci
-
-    name: run verification
-    runs-on: [ubuntu-latest]
-    needs: compile-fds
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: download a single artifact
-      uses: actions/download-artifact@v3
-      with:
-        path: /home/runner/work/fds/fds/Build/impi_intel_linux_db
-        name: fds_impi_intel_linux_db
-
     - name: run a case
       run: |
-        source /opt/intel/oneapi/setvars.sh
-        cd ./Build/impi_intel_linux_db
-        chmod +x fds_impi_intel_linux_db
-        ./fds_impi_intel_linux_db
+        cd Verification/Fires
+        Build/impi_intel_linux_db/fds_impi_intel_linux_db simple_test.fds
 
 
 
