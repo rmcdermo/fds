@@ -112,6 +112,7 @@ jobs:
 
     - name: run a case
       run: |
+        source /opt/intel/oneapi/setvars.sh
         cd ./Build/impi_intel_linux_db
         chmod +x fds_impi_intel_linux_db
         ./fds_impi_intel_linux_db
