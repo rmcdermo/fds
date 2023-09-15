@@ -21,8 +21,8 @@ on:
 #   group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.ref }}
 #   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-permissions:
-  contents: read
+# permissions:
+#   contents: read
 
 jobs:
   build-run:
@@ -80,8 +80,7 @@ jobs:
     - name: run a case
       run: |
         cd $GITHUB_WORKSPACE/Verification/Fires
-        export OMP_NUM_THREADS=1
-        mpiexec -n 1 $GITHUB_WORKSPACE/Build/impi_intel_linux_db/fds_impi_intel_linux_db simple_test.fds
+        $GITHUB_WORKSPACE/Build/impi_intel_linux_db/fds_impi_intel_linux_db simple_test.fds
 
 
 
