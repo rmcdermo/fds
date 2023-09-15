@@ -12,7 +12,7 @@ on:
   schedule:
     # run every night at midnight EST (4:00 am UTC)
     # * is a special character in YAML so you have to quote this string
-    - cron:  '0 4 * * *'
+    - cron: '0 4 * * *'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -113,7 +113,7 @@ jobs:
     - name: run a case
       run: |
         cd ./Build/impi_intel_linux_db
-        ls
+        chmod +x fds_impi_intel_linux_db
         ./fds_impi_intel_linux_db
 
 
