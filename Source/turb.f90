@@ -1421,7 +1421,7 @@ REGIME_SELECT: SELECT CASE(REGIME)
       NATURAL_LOOP: DO ITER=1,MAX_ITER
 
          ! Step 2: compute new thermal diffusive length scale, delta*
-         D_STAR = SQRT(THETA_FORCED/Q)
+         D_STAR = (THETA_NATURAL/Q)**0.25_EB
 
          ! Step 3: compute new z* (thermal)
          Z_STAR = ZC/D_STAR
