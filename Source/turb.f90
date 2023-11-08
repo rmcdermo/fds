@@ -1370,7 +1370,7 @@ ENDIF
 END SUBROUTINE FORCED_CONVECTION_MODEL
 
 
-SUBROUTINE RAYLEIGH_HEAT_FLUX_MODEL(H,Z_STAR,DZ,TMP_W,TMP_G,K_G,RHO_G,CP_G,MU_G)
+SUBROUTINE RAYLEIGH_HEAT_FLUX_MODEL(H,Z_STAR,DZ,TMP_W,TMP_G,K_G,RHO_G,CP_G,MU_G,VEL_G)
 
 !!!!! EXPERIMENTAL !!!!!
 
@@ -1380,14 +1380,16 @@ SUBROUTINE RAYLEIGH_HEAT_FLUX_MODEL(H,Z_STAR,DZ,TMP_W,TMP_G,K_G,RHO_G,CP_G,MU_G)
 ! J.P. Holman, Heat Transfer, 7th Ed., McGraw-Hill, 1990, p. 346.
 
 REAL(EB), INTENT(OUT) :: H,Z_STAR
-REAL(EB), INTENT(IN) :: DZ,TMP_W,TMP_G,K_G,RHO_G,CP_G,MU_G
-REAL(EB) :: NUSSELT,Q,ZC,NU_G,D_STAR,ALPHA,THETA,Q_OLD,ERROR,DTMP
-INTEGER :: ITER
+REAL(EB), INTENT(IN) :: DZ,TMP_W,TMP_G,K_G,RHO_G,CP_G,MU_G,VEL_G
+REAL(EB) :: NUSSELT,Q,ZC,NU_G,D_STAR,ALPHA,THETA_NATURAL,THETA_FORCED,Q_OLD,ERROR,DTMP,PR_L,PR_T
+INTEGER :: ITER,REGIME
 INTEGER, PARAMETER :: MAX_ITER=10
 ! C_L = Z_L**(-0.8_EB)
 ! C_T = C_L*Z_T**(-0.2_EB)
 REAL(EB), PARAMETER :: Z_L = 3.2_EB, Z_T=17._EB
 REAL(EB), PARAMETER :: C_L = 3.2_EB**(-0.8_EB), C_T = C_L*17._EB**(-0.2_EB)
+INTEGER, PARAMETER :: NATURAL=1, FORCED=2
+REAL(EB), PARAMETER :: TWO_NINETHS=2._EB/9._EB, EIGHT_NINETHS=8._EB/9._EB, FIVE_TWENTY_SEVENTHS=5._EB/27._EB
 
 IF (ABS(TMP_W-TMP_G)<TWO_EPSILON_EB) THEN
    H = 0._EB
@@ -1398,7 +1400,15 @@ ENDIF
 ZC = 0.5_EB*DZ
 NU_G = MU_G/RHO_G
 ALPHA = K_G/(RHO_G*CP_G)
-THETA = TMP_W*K_G*ALPHA*NU_G/GRAV
+THETA_NATURAL = 0.5_EB*(TMP_W+TMP_G)*K_G*NU_G*ALPHA/(GRAV+TWO_EPSILON_EB)
+THETA_FORCED  =     ABS(TMP_W-TMP_G)*K_G*NU_G/(VEL_G+TWO_EPSILON_EB)
+
+REGIME = NATURAL
+IF (THETA_FORCED < THETA_NATURAL**2) THEN
+   REGIME = FORCED
+   PR_L = (NU_G/ALPHA)**TWO_NINETHS
+   PR_T = (NU_G/ALPHA)**FIVE_TWENTY_SEVENTHS
+ENDIF
 
 ! Step 1: assume a heat transfer coefficient
 
@@ -1406,37 +1416,63 @@ H = K_G/ZC ! initial guess
 DTMP = ABS(TMP_W-TMP_G)
 Q = H*DTMP
 
-RAYLEIGH_LOOP: DO ITER=1,MAX_ITER
+REGIME_SELECT: SELECT CASE(REGIME)
+   CASE(NATURAL) REGIME_SELECT
+      NATURAL_LOOP: DO ITER=1,MAX_ITER
 
-   ! Step 2: compute new thermal diffusive length scale, delta*, from modified Grashof number * Pr
+         ! Step 2: compute new thermal diffusive length scale, delta*
+         D_STAR = SQRT(THETA_FORCED/Q)
 
-   D_STAR = (THETA/Q)**0.25_EB
+         ! Step 3: compute new z* (thermal)
+         Z_STAR = ZC/D_STAR
 
-   ! Step 3: compute new z* (thermal)
+         ! Step 4: based on z*, choose scaling law
+         IF (Z_STAR<=Z_L) THEN
+            NUSSELT = 1._EB
+         ELSEIF (Z_STAR>Z_L .AND. Z_STAR<=Z_T) THEN
+            NUSSELT = C_L * Z_STAR**0.8_EB
+         ELSE
+            NUSSELT = C_T * Z_STAR
+         ENDIF
 
-   Z_STAR = ZC/D_STAR ! Ra* = (z*)**4
+         ! Step 5: update heat transfer coefficient
+         H = NUSSELT*K_G/ZC
+         Q_OLD = Q
+         Q = H*DTMP
 
-   ! Step 4: based on z*, choose Ra scaling law
+         ERROR = ABS(Q-Q_OLD)/MAX(Q_OLD,TWO_EPSILON_EB)
 
-   IF (Z_STAR<=Z_L) THEN
-      NUSSELT = 1._EB
-   ELSEIF (Z_STAR>Z_L .AND. Z_STAR<=Z_T) THEN
-      NUSSELT = C_L * Z_STAR**0.8_EB
-   ELSE
-      NUSSELT = C_T * Z_STAR
-   ENDIF
+         IF (ERROR<0.001_EB) EXIT NATURAL_LOOP
+      ENDDO NATURAL_LOOP
 
-   ! Step 5: update heat transfer coefficient
+   CASE(FORCED) REGIME_SELECT
+      FORCED_LOOP: DO ITER=1,MAX_ITER
 
-   H = NUSSELT*K_G/ZC
-   Q_OLD = Q
-   Q = H*DTMP
+         ! Step 2: compute new thermal diffusive length scale, delta*
+         D_STAR = SQRT(THETA_FORCED/Q)
 
-   ERROR = ABS(Q-Q_OLD)/MAX(Q_OLD,TWO_EPSILON_EB)
+         ! Step 3: compute new z* (thermal)
+         Z_STAR = ZC/D_STAR
 
-   IF (ERROR<0.001_EB) EXIT RAYLEIGH_LOOP
+         ! Step 4: based on z*, choose scaling law
+         IF (Z_STAR<=Z_L) THEN
+            NUSSELT = 1._EB
+         ELSEIF (Z_STAR>Z_L .AND. Z_STAR<=Z_T) THEN
+            NUSSELT = C_L * PR_L * Z_STAR**TWTH
+         ELSE
+            NUSSELT = C_T * PR_T * Z_STAR**EIGHT_NINETHS
+         ENDIF
 
-ENDDO RAYLEIGH_LOOP
+         ! Step 5: update heat transfer coefficient
+         H = NUSSELT*K_G/ZC
+         Q_OLD = Q
+         Q = H*DTMP
+
+         ERROR = ABS(Q-Q_OLD)/MAX(Q_OLD,TWO_EPSILON_EB)
+
+         IF (ERROR<0.001_EB) EXIT FORCED_LOOP
+      ENDDO FORCED_LOOP
+END SELECT REGIME_SELECT
 
 END SUBROUTINE RAYLEIGH_HEAT_FLUX_MODEL
 
