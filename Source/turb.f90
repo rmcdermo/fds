@@ -1389,6 +1389,8 @@ INTEGER, PARAMETER :: MAX_ITER=10
 ! C_T = C_L*Z_T**(-0.2_EB)
 REAL(EB), PARAMETER :: Z_L = 3.2_EB, Z_T=17._EB
 REAL(EB), PARAMETER :: C_L = 3.2_EB**(-0.8_EB), C_T = C_L*17._EB**(-0.2_EB)
+REAL(EB), PARAMETER :: Z_L_FORCED = 1._EB, Z_T_FORCED=70._EB
+REAL(EB), PARAMETER :: C_L_FORCED = 1._EB, C_T_FORCED =0.430_EB
 INTEGER, PARAMETER :: NATURAL=1, FORCED=2
 REAL(EB), PARAMETER :: TWO_NINETHS=2._EB/9._EB, EIGHT_NINETHS=8._EB/9._EB, FIVE_TWENTY_SEVENTHS=5._EB/27._EB
 
@@ -1463,12 +1465,12 @@ REGIME_SELECT: SELECT CASE(REGIME)
          Z_STAR = ZC/D_STAR
 
          ! Step 4: based on z*, choose scaling law
-         IF (Z_STAR<=Z_L) THEN
+         IF (Z_STAR<=Z_L_FORCED) THEN
             NUSSELT = 1._EB
-         ELSEIF (Z_STAR>Z_L .AND. Z_STAR<=Z_T) THEN
-            NUSSELT = C_L * PR_L * Z_STAR**TWTH
+         ELSEIF (Z_STAR>Z_L_FORCED .AND. Z_STAR<=Z_T_FORCED) THEN
+            NUSSELT = C_L_FORCED * PR_L * Z_STAR**TWTH
          ELSE
-            NUSSELT = C_T * PR_T * Z_STAR**EIGHT_NINETHS
+            NUSSELT = C_T_FORCED * PR_T * Z_STAR**EIGHT_NINETHS
          ENDIF
 
          ! Step 5: update heat transfer coefficient
