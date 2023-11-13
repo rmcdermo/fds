@@ -36,6 +36,7 @@ for i=1:length(vel)
     Nu_1 = 0.0296 * Re_1.^0.8; % reference value for normalization of errors
 
     Nu_x_lam = 0.332 * Re_x.^0.5; % Holman, Eq. 5-44
+    Nu_x_turb = 0.185 * log10(Re_x).^(-2.584) .* Re_x ;
 
     % BL_thickness = 0.37*x.*Re_x.^(-0.2);
     % BL_thickness(end)
@@ -46,6 +47,7 @@ for i=1:length(vel)
 
     H(1)=plot(Re_x,Nu_x); hold on
     H(2)=plot(Re_x,Nu_x_lam); hold on
+    H(3)=plot(Re_x,Nu_x_turb); hold on
     xlabel('Re_x','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
     ylabel('Nu_x','Interpreter',Font_Interpreter,'FontSize',Label_Font_Size)
 
@@ -72,8 +74,8 @@ for i=1:length(vel)
         Nu_x_fds = -1000*q_fds./(T_w-T_g).*x_fds/k;
         Re_x_fds = (rho/mu)*u(i)*x_fds;
 
-        H(2+j)=plot(Re_x_fds,Nu_x_fds,res_style{j});
-        H(2+length(res)+j)=plot(Re_x_fds,2/dx(j)*x_fds,dx_style{j});
+        H(3+j)=plot(Re_x_fds,Nu_x_fds,res_style{j});
+        H(3+length(res)+j)=plot(Re_x_fds,2/dx(j)*x_fds,dx_style{j});
 
         REL_ERROR(i,j) = abs(Nu_x(end)-Nu_x_fds(end))/Nu_x(end);
 
@@ -86,7 +88,8 @@ for i=1:length(vel)
     ytxt = yl(1) + 0.9*(yl(2)-yl(1));
     text(xtxt,ytxt,['Velocity = ',num2str(u(i)),' m/s'],'FontName',Font_Name,'FontSize',Title_Font_Size)
 
-    lh=legend(H,'0.0296 Re_x^{4/5}','0.332 Re_x^{1/2}','FDS \Deltax=25cm','FDS \Deltax=10cm','FDS \Deltax=2.5cm','2*1/0.25*x','2*1/0.10*x','2*1/0.025*x','location','northwest');
+    lh=legend(H,'0.0296 Re_x^{4/5}','0.332 Re_x^{1/2}','0.185 log(Re_x)^{-2.584} Re_x',...
+        'FDS \Deltax=25cm','FDS \Deltax=10cm','FDS \Deltax=2.5cm','2*1/0.25*x','2*1/0.10*x','2*1/0.025*x','location','eastoutside');
     set(lh,'FontName',Font_Name,'FontSize',Key_Font_Size)
 
     Git_Filename = [outdir,chid,'_',vel{i},'_25cm_git.txt'];
