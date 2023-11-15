@@ -1475,9 +1475,9 @@ REGIME_SELECT: SELECT CASE(REGIME)
          IF (Z_STAR<=Z_L_FORCED) THEN
             NUSSELT = 1._EB
          ELSEIF (Z_STAR>Z_L_FORCED .AND. Z_STAR<=Z_T_FORCED) THEN
-            NUSSELT = C_L_FORCED * PR_L_FAC * Z_STAR**TWTH
+            NUSSELT = C_L_FORCED * Z_STAR**TWTH
          ELSE
-            NUSSELT = C_T_FORCED * PR_T_FAC * Z_STAR**EIGHT_NINETHS
+            NUSSELT = C_T_FORCED * Z_STAR**EIGHT_NINETHS
          ENDIF
 
          ! Step 5: update heat transfer coefficient
