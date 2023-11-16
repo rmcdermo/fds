@@ -1,14 +1,11 @@
 ! J. Kim and P. Moin. Transport of Passive Scalars in Turbulent Channel Flow. NASA Technical Memorandum 89463, 1987.
 
-&HEAD CHID='heated_channel_Pr_1p00_32', TITLE='LES of turbulent channel, Re_tau=180 ' /
+&HEAD CHID='heated_channel_Pr_0p71_8', TITLE='LES of turbulent channel with heat source with wall model, Pr=0.71' /
 
-MESH IJK=64,32,32, XB=0,12,0,6,0,2/ original mesh setup
+MESH IJK=64,32,32, XB=0,12,0,6,0,2/ original mesh setup by Jung-Il Choi
 
-! &MULT DX=2,DY=2,DZ=2, I_UPPER=5,J_UPPER=2, ID='m1'/
-! &MESH IJK=16,16,16, XB=0,2,0,2,0,2, MULT_ID='m1'/
-
-&MULT DX=1,DY=1,DZ=1, I_UPPER=11,J_UPPER=5,K_UPPER=1, ID='m1'/ 144 mesh
-&MESH IJK=16,16,16, XB=0,1,0,1,0,1, MULT_ID='m1'/
+&MULT DX=2,DY=2,DZ=2, I_UPPER=5,J_UPPER=2, ID='m1'/
+&MESH IJK=8,8,8, XB=0,2,0,2,0,2, MULT_ID='m1'/
 
 &INIT XB=0,12,0,6,0,2, TEMPERATURE=21.5, HRRPUV=0.0005 /
 
@@ -24,7 +21,7 @@ MESH IJK=64,32,32, XB=0,12,0,6,0,2/ original mesh setup
 
 &RADI RADIATION=.FALSE./
 
-&SPEC ID='LJ AIR', SPECIFIC_HEAT=1., CONDUCTIVITY=0.018216, VISCOSITY=1.8216E-5, BACKGROUND=.TRUE./ ! Pr=1.00
+&SPEC ID='LJ AIR', SPECIFIC_HEAT=1., CONDUCTIVITY=0.025656, VISCOSITY=1.8216E-5, BACKGROUND=.TRUE./ ! Pr=0.71
 
 &VENT PBX=0,  SURF_ID='PERIODIC' /
 &VENT PBX=12, SURF_ID='PERIODIC' /
