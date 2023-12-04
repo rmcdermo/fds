@@ -640,7 +640,7 @@ Note: Reports of specific bugs, problems, feature requests, and enhancements sho
 
 \section{Naming the Input File}
 
-The operation of FDS is based on a single ASCII\footnote{ASCII -- American Standard Code for Information Interchange. There are 256 characters that make up the standard ASCII text.} text file containing parameters organized into {\em namelist}\footnote{A {\em namelist} is a Fortran input record.} groups. The input file provides FDS  with all of the necessary information to describe the scenario. The input file is saved with a name such as {\ct job\_name.fds}, where {\ct job\_name} is any character string that helps to identify the simulation. If this same string is repeated under the {\ct HEAD} namelist group within the input file, then all of the output files associated with the calculation will then have this common prefix name.
+The operation of FDS is based on a single ASCII\footnote{ASCII -- American Standard Code for Information Interchange. There are 128 characters that make up the standard ASCII text.} text file containing parameters organized into {\em namelist}\footnote{A {\em namelist} is a Fortran input record.} groups. The input file provides FDS  with all of the necessary information to describe the scenario. The input file is saved with a name such as {\ct job\_name.fds}, where {\ct job\_name} is any character string that helps to identify the simulation. If this same string is repeated under the {\ct HEAD} namelist group within the input file, then all of the output files associated with the calculation will then have this common prefix name.
 
 There should be no blank spaces in the job name. Instead use the underscore character to represent a space.  Using an underscore characters instead of a space also applies to the general practice of naming directories on your system.
 
@@ -658,7 +658,7 @@ sets various values of parameters contained in the {\ct DUMP} namelist group. Th
 
 Parameters within a namelist record can be separated by either commas, spaces, or line breaks. It is recommended that you use commas or line breaks, and never use tab stops because they are not explicitly defined in the namelist data structure. Comments and notes can be written into the file so long as nothing comes before the ampersand except a space and nothing comes between the ampersand and the slash except appropriate parameters corresponding to that particular namelist group.
 
-The parameters in the input file can be integers, reals, character strings, or logical parameters. A logical parameter is either {\ct T} or {\ct F} -- the periods are a Fortran convention. Character strings that are listed in this User's Guide must be copied exactly as written -- the code is case sensitive and underscores {\em do} matter. The maximum length of most character input parameters is 60.
+The parameters in the input file can be integers, reals, character strings, or logical parameters. A logical parameter (outside of Fortran known as boolean parameter) is either {\ct T} (for True) or {\ct F} (for False). The periods following numbers (e.g. {\ct 10.}) are a convention for specifying a real as opposed to an integer ({\ct 10.} is equivalent to {\ct 10.0}). Character strings that are listed in this User's Guide must be copied exactly as written -- the code is case sensitive and underscores {\em do} matter. The maximum length of most character input parameters is 60.
 
 Most of the input parameters are simply real or integer scalars, like {\ct DT=0.02}, but sometimes the inputs are
 multidimensional arrays. For example, when describing a particular solid surface, you need to express the mass fractions of multiple materials that are to be found in multiple layers. The input array {\ct MATL\_MASS\_FRACTION(IL,IC)} is intended to convey to FDS the mass fraction of component {\ct IC} of layer {\ct IL}. For example, if the mass fraction of the second material of the third layer is 0.5, then write
@@ -673,7 +673,7 @@ which means that the first three materials of layer 1 have mass fractions of 0.5
 
 Note that character strings can be enclosed either by single or double quotation marks. Be careful not to create the input file by pasting text from something other than a simple text editor, in which case the punctuation marks may not transfer properly into the text file.
 
-Some text file encodings may not work on all systems. If file reading errors occur and no typographical errors can be found in the input file, try saving the input file using a different encoding. For example, the text file editor Notepad works fine on a Windows PC, but a file edited in Notepad may not work on Linux or Mac OS~X because of the difference in line endings between Windows and Unix/Linux operating systems. The editor Wordpad typically works better, but try a simple case first.
+Some text file encodings may not work on all systems. If file reading errors occur and no typographical errors can be found in the input file, try saving the input file using a different encoding. For example, the text file editor Notepad works fine on a Windows PC, but a file edited in Notepad may not work on Linux or Mac OS~X because of the difference in line endings between Windows and Unix/Linux operating systems. Other text editors, such as Notepad++, typically work better, but try a simple case first.
 
 
 \section{Input File Structure}
@@ -731,7 +731,7 @@ Validation Suite} removed for clarity.
 ...
 &TAIL / End of file.
 \end{lstlisting}
-It is recommended that when looking at a new scenario, first select a pre-written input file that resembles the case, make the necessary changes, then run the case at fairly low mesh resolution to determine if the geometry is set up correctly. It is best to start off with a relatively simple file that captures the main features of the problem without getting tied down with too much detail that might mask a fundamental flaw in the calculation. Initial calculations ought to be meshed coarsely so that the run times are less than an hour and corrections can easily be made without wasting too much time. As you learn how to write input files, you will continually run and re-run your case as you add in complexity.
+It is recommended that when looking at a new scenario, first select a pre-written input file that resembles the case, make the necessary changes, then run the case at fairly low mesh resolution to determine if the file is set up correctly. It is best to start off with a relatively simple file that captures the main features of the problem without getting tied down with too much detail that might mask a fundamental flaw in the calculation. Initial calculations ought to be meshed coarsely so that the run times are less than an hour and corrections can easily be made without wasting too much time. As you learn how to write input files, you will continually run and re-run your case as you add in complexity.
 
 Table~\ref{tbl:namelistgroups} provides a quick reference to all the namelist parameters and where you can find the reference to where it is introduced in the document and the table containing all of the keywords for each group.
 
@@ -999,11 +999,11 @@ Whether the calculation is to be run using MPI or not, the rules of prescribing 
 \put(  0, 90){\usebox{\mygraph}}
 \put(100,120){\usebox{\myfinegraph}}
 \put(100, 80){\usebox{\myfinegraph}}
-\put(230,120){\parbox{2.5in}{This is not allowed because each large cell must be completely covered by small ones of the same mesh.}}
+\put(230,120){\parbox{2.5in}{This is not allowed because there is a coarse cell which sees fine cells from two different meshes.}}
 
 \put(  0,  0){\usebox{\mygraph}}
 \put(100,  0){\usebox{\myotherfinegraph}}
-\put(230, 30){\parbox{2.5in}{This is not allowed.}}
+\put(230, 30){\parbox{2.5in}{This is not allowed because there is a non-integral number  of fine cells abutting each coarse cell.}}
 \end{picture}
 
 \caption[Rules governing the alignment of meshes]{Rules governing the alignment of meshes.}
@@ -2200,10 +2200,10 @@ Refer to the FDS Tech Guide \cite{FDS_Tech_Guide} for further details of the for
 
 If a surface is emitting (``blowing'') or removing (``sucking'') gas, the flow normal to the surface disrupts the thermal boundary layer. Blowing tends to decrease the heat transfer coefficient while sucking tends to increase it. This effect can be accounted for by adding {\ct BLOWING=T} to the {\ct SURF} line, except for DNS simulations where empirical heat transfer correlations are not used. When {\ct BLOWING=T}, the heat transfer coefficient is adjusted as follows~\cite{Plate_blowing}:
 \begin{equation}
-	\Phi_h = \frac{\dot{m}'' c_p}{h}
+      \Phi_h = \frac{\dot{m}'' c_p}{h}
 \end{equation}
 \begin{equation}
-	h_{\rm blowing} = \frac{\Phi_h}{{\rm e}^{\Phi_h}-1} h
+      h_{\rm blowing} = \frac{\Phi_h}{{\rm e}^{\Phi_h}-1} h
 \end{equation}
 where $h$ is the unadjusted heat transfer coefficient, $\dot{m}''$ is the mass flow rate per unit area (positive for blowing), and $c_p$ is the specific heat of the gas.
 
@@ -5219,7 +5219,7 @@ This type of reaction is specified by adding {\ct THIRD\_BODY=T} to the {\ct REA
 
 Some reactions require the presence of a specific molecule to stabilize the reaction rather than any species as in a third body reaction. An example is given below:
 \begin{equation}\label{eq:catalyst}
-	\mathrm{a \, X + b \, Y + \, Z \rightarrow X_aY_b + Z }
+      \mathrm{a \, X + b \, Y + \, Z \rightarrow X_aY_b + Z }
 \end{equation}
 A catalyst can be specified by listing the catalyst species twice in {\ct SPEC\_ID\_NU} and giving the {\ct NU} values for each side of the equation. The reaction will move forward in FDS using the net {\ct NU} and the default value for {\ct NU\_S} will be the left-hand side stoichiometric coefficient. For a reverse reaction, the value or {\ct NU\_S} for the catalyst will be the right-hand side stoichiometric coefficient.
 
@@ -6209,10 +6209,10 @@ The {\ct ORIENTATION} for a particle placed with an {\ct INIT} line can be contr
 Note that the {\ct PART} input must contain {\ct ORIENTATION} as this signals to FDS to allocate array space for the angular radiative fluxes for that class of particles. This block of input was used in test case consisting of a 1~\si{m$^3$} box with the +x wall emitting a radiative flux of 10~\si{kW/m$^2$}, and the remaining walls emitting 1~\si{kW/m$^2$}. Results are shown in Fig.~\ref{fig:part_orientation_ramp}.
 
 \begin{figure}[ht]
-	\centering
-	\includegraphics[height=2.2in]{SCRIPT_FIGURES/part_orientation_ramp}
-	\caption[Results of the {\ct part\_orientation\_ramp} case]{Particle radiative flux for {\ct part\_orientatoin\_ramp} case.}
-	\label{fig:part_orientation_ramp}
+      \centering
+      \includegraphics[height=2.2in]{SCRIPT_FIGURES/part_orientation_ramp}
+      \caption[Results of the {\ct part\_orientation\_ramp} case]{Particle radiative flux for {\ct part\_orientatoin\_ramp} case.}
+      \label{fig:part_orientation_ramp}
 \end{figure}
 
 \newpage
@@ -8358,10 +8358,10 @@ When external control is selected, FDS will set the value of the {\ct RAMP} or t
 
 The csv file format is:
 \begin{lstlisting}
-	Type(1), ID(1), Value(1)
-	Type(2), ID(2), Value(2)
-	.
-	.
+      Type(1), ID(1), Value(1)
+      Type(2), ID(2), Value(2)
+      .
+      .
 \end{lstlisting}
 where {\ct Type} is either {\ct RAMP} or {\ct CTRL}, {\ct ID} is the corresponding {\ct ID} in the FDS input files, and {\ct Value} is the new output value for a {\ct RAMP} or the new logical state for a {\ct CTRL} where positive values mean the {\ct CTRL} evaluates as {\ct TRUE} and negative values mean the function evaluates as {\ct FALSE}.
 
@@ -8387,10 +8387,10 @@ CTRL,"VENT CTRL",-1
 This turns off the velocity vent (a negative {\ct CTRL} value means set the state to {\ct .FALSE.}) and sets the fixed temperature vent to 1000~$^\circ$C (a {\ct RAMP} value of 1 means apply the full value of {\ct TMP\_FRONT}). Note that the {\ct ID} strings are enclosed in quotes. This is only required if the string has a space or comma in it.  Results of running the case are shown in Fig.~\ref{external_control_fig}
 
 \begin{figure}[ht]
-	\includegraphics[width=3in]{SCRIPT_FIGURES/external_test_temperature}
-	\includegraphics[width=3in]{SCRIPT_FIGURES/external_test_velocity}
-	\caption[Results of the {\ct external\_test} test case]{(Left) Surface temperature. (Right) Wall velocity.}
-	\label{external_control_fig}
+      \includegraphics[width=3in]{SCRIPT_FIGURES/external_test_temperature}
+      \includegraphics[width=3in]{SCRIPT_FIGURES/external_test_velocity}
+      \caption[Results of the {\ct external\_test} test case]{(Left) Surface temperature. (Right) Wall velocity.}
+      \label{external_control_fig}
 \end{figure}
 
 
@@ -8713,6 +8713,8 @@ ramps the heat source up from 0 to 1000~kW/m$^3$ linearly over 60 seconds.
 \label{info:NOISE}
 
 FDS initializes the flow field with a very small amount of ``noise'' to prevent the development of a perfectly symmetric flow when the boundary and initial conditions are perfectly symmetric. To turn this off, set {\ct NOISE=F} To control the amount of noise, set {\ct NOISE\_VELOCITY}. Its default value is 0.005~m/s.
+
+FDS uses a predefined random seed for the random number generator which ensures that each mesh is seeded with a different number. A predefined seed means that all simulations will use the same sequence of random numbers for a given mesh. You can change the random seed by specifying {\ct RND\_SEED} on the {\ct MISC} line. This defines a constant value that is added to the predefined random seed on each mesh.
 
 \subsection{Turning off the Flow Field}
 \label{info:freeze_velocity}
@@ -10073,6 +10075,9 @@ where $\dot{q}_{\rm inc}''$ is the {\em incident} radiative heat flux, $\epsilon
 \item[\ct 'CONVECTIVE HEAT FLUX']
 \hspace{1in} \newline This is the convective component of Eq.~(\ref{net_flux}), $\quad \dq_{\rm c}'' = h_{\rm c} \, (T_{\rm g} - T_{\rm s})$.
 
+\item[\ct 'CONVECTIVE HEAT FLUX GAUGE']
+\hspace{1in} \newline This is the convective component of Eq.~(\ref{gauge_heat_flux}), $\quad \dq_{\rm c,gauge}'' = h_{\rm c} \, (T_{\rm g} - T_{\rm gauge})$.
+
 \item[\ct 'INCIDENT HEAT FLUX']
 \hspace{1in} \newline This is the term $\dq_{\rm inc}''$ in Eq.~(\ref{net_flux}).
 
@@ -10991,6 +10996,7 @@ Table~\ref{tab:solidoutputquantities} below lists solid phase output quantities.
 {\ct BURNING RATE}                              & Mass loss rate of fuel                        & \si{kg/(m$^2$.s)}  & B,D          \\ \hline
 {\ct CONDENSATION HEAT FLUX}                    & Section~\ref{info:condensation}               & kW/m$^2$           & B,D          \\ \hline
 {\ct CONVECTIVE HEAT FLUX}                      & Section~\ref{info:heat_flux}                  & kW/m$^2$           & B,D          \\ \hline
+{\ct CONVECTIVE HEAT FLUX GAUGE}                & Section~\ref{info:heat_flux}                  & kW/m$^2$           & B,D          \\ \hline
 {\ct CPUA}$^2$                                  & Section~\ref{bucket_test_1}                   & kW/m$^2$           & B,D          \\ \hline
 {\ct CPUA\_Z}$^1$                               & Section~\ref{bucket_test_1}                   & kW/m$^2$           & B,D          \\ \hline
 {\ct DEPOSITION VELOCITY}                       & Section~\ref{info:deposition}                 & m/s                & B,D          \\ \hline
@@ -11174,7 +11180,7 @@ $^2$                 \> Requires the specification of a particle name using {\ct
 \begin{sloppypar}
 Table~\ref{tab:hvacoutputquantities} summarizes the various Output Quantities for HVAC systems. In the file type column, D indicates a device output specified with a {\ct DEVC} input, and H indicates a Smokeview output specified with an {\ct HVAC} input.
 
-All HVAC output quantities can be selected with a {\ct DEVC} input and do not require an {\ct XYZ} or {\ct XB}. When using a {\ct DEVC}, quantities for a duct require the specification of a {\ct DUCT\_ID}, quantities for a node require the specification of a {\ct NODE\_ID}, and quantities for a duct cell (when {\ct HVAC\_MASS\_TRANSPORT\_CELL\_L} or {ct N\_CELLS} are specified) require specification of both a {\ct DUCT\_ID} and a {\ct CELL\_L} (distance along the duct in meters from the first node where the desired cell is located).  Mass and volume fraction outputs also require the specification of a {\ct SPEC\_ID}. Fan and aircoil outputs require the {\ct DUCT\_ID} of the duct they are located in. Filter outputs require the {\ct NODE\_ID} of the node they are located in. The quantity {\ct DUCT ENTHALPY FLOW} applies Eq.~\ref{enthalpy_flow} to the flow in the duct. To have the node output {\ct NODE ENTHALPY} reflect the duct quantity of {\ct DUCT ENTHALPY FLOW} set {\ct RELATIVE=.TRUE} for the node output. The quantity {\ct NODE PRESSSURE DIFFERENCE} requires that one specify both elements of the array {\ct NODE\_ID}, and the pressure difference is calculated by subtracting the first node from the second.
+All HVAC output quantities can be selected with a {\ct DEVC} input. Do not specify an {\ct XYZ} or {\ct XB} for HVAC outputs. When using a {\ct DEVC}, quantities for a duct require the specification of a {\ct DUCT\_ID}, quantities for a node require the specification of a {\ct NODE\_ID}, and quantities for a duct cell (when {\ct HVAC\_MASS\_TRANSPORT\_CELL\_L} or {ct N\_CELLS} are specified) require specification of both a {\ct DUCT\_ID} and a {\ct CELL\_L} (distance along the duct in meters from the first node where the desired cell is located).  Mass and volume fraction outputs also require the specification of a {\ct SPEC\_ID}. Fan and aircoil outputs require the {\ct DUCT\_ID} of the duct they are located in. Filter outputs require the {\ct NODE\_ID} of the node they are located in. The quantity {\ct DUCT ENTHALPY FLOW} applies Eq.~\ref{enthalpy_flow} to the flow in the duct. To have the node output {\ct NODE ENTHALPY} reflect the duct quantity of {\ct DUCT ENTHALPY FLOW} set {\ct RELATIVE=.TRUE} for the node output. The quantity {\ct NODE PRESSSURE DIFFERENCE} requires that one specify both elements of the array {\ct NODE\_ID}, and the pressure difference is calculated by subtracting the first node from the second.
 
 HVAC output quantities beginning with {\ct DUCT} that are not duct cell quantities and output quantities beginning with {\ct NODE} except for {\ct NODE PRESSURE DIFFERENCE} can also be output to the {\ct CHID.hvac} file that Smokeview uses to visualize duct quantities (file format description in Section~\ref{inout:binhvac}). These are identified in Table~\ref{tab:hvacoutputquantities} as a File Type of H. Smokeview outputs are specified using the {\ct HVAC} namelist. To select duct outputs use {\ct TYPE\_ID='DUCT QUANTITY LIST'}, and for node outputs use {\ct TYPE\_ID='NODE QUANTITY LIST'}. Specify a list of up to 20 outputs using {\ct QUANTITY}, and if any quantities require a species also specify {\ct QUANTITY\_SPEC\_ID}. For duct outputs, if the duct is divided into cells, then Smokeview outputs are written for each cell. The output interval can be set using {\ct DT\_HVAC} on {\ct DUMP}. For example:
 \begin{lstlisting}
@@ -11253,7 +11259,7 @@ properties be specified as well. Simply prescribing as many properties as possib
 % ignorenamelistkw: /MISC/CC_IBM, /MISC/CCVOL_LINK
 % ignorenamelistkw: /PART/DEBUG
 % ignorenamelistkw: /REAC/C, /REAC/H, /REAC/O, /REAC/N, /REAC/FORMULA,
-% ignorenamelistkw: /SLCF/DEBUG, /SLCF/RLE_MIN, /SLCF/RLE_MAX, /SLCF/SLICETYPE
+% ignorenamelistkw: /SLCF/DEBUG, /SLCF/RLE_MIN, /SLCF/RLE_MAX, /SLCF/SLICETYPE, /SURF/HT1D
 
 % ignore keywords that appear on any namelist
 % ignoreallkw: FYI
@@ -12077,7 +12083,8 @@ $\Delta t$={\ct T\_END-T\_BEGIN}
 {\ct RAMP\_GZ}                                      & Character    & Section~\ref{info:GVEC}                 &            &                   \\ \hline
 {\ct RESTART}                                       & Logical      & Section~\ref{info:restart}              &            & {\ct F}           \\ \hline
 {\ct RESTART\_CHID}                                 & Character    & Section~\ref{info:restart}              &            & {\ct CHID}        \\ \hline
-{\ct SC}                                            & Real         & Section~\ref{info:LES}                  &            & 0.5               \\ \hline
+{\ct RND\_SEED}                                     & Integer      & Section~\ref{info:restart}              &            &                   \\ \hline
+{\ct SC}                                            & Real         & Section~\ref{info:NOISE}                &            & 0.5               \\ \hline
 {\ct SHARED\_FILE\_SYSTEM}                          & Logical      & Section~\ref{info:multimesh}            &            & {\ct T}           \\ \hline
 {\ct SIMULATION\_MODE}                              & Character    & Section~\ref{Sim_Mode}                  &            & {\ct 'VLES'}      \\ \hline
 {\ct SMOKE3D\_16}                                   & Logical      & Section~\ref{info:smoke16}              &            & {\ct F}           \\ \hline
@@ -13671,16 +13678,16 @@ This information allows for complete area and boundary condition information per
 \label{inout:binhvac}
 The HVAC outputs under the namelist group {\ct HVAC} are written out unformatted to the file {\ct CHID.hvac}. These files are written out from {\ct dump.f90} with the following lines:
 \begin{lstlisting}
-	WRITE(LU_HVAC) N_NODE_OUT, N_NODE_QUANTITY, N_DUCT_OUT, N_DUCT_QUANTITY
-	WRITE(LU_HVAC) DUCT_CELL(1:N_DUCT_OUT)
+      WRITE(LU_HVAC) N_NODE_OUT, N_NODE_QUANTITY, N_DUCT_OUT, N_DUCT_QUANTITY
+      WRITE(LU_HVAC) DUCT_CELL(1:N_DUCT_OUT)
 
-	WRITE(LU_HVAC) TIME
+      WRITE(LU_HVAC) TIME
     DO N=1,N_NODE_OUT
        WRITE(LU_HVAC) OUTVAL_N(1:N_NODE_QUANTITY)
     ENDDO
-	DO N=1,N_DUCT_OUT
-	   IF (DUCT(N)%N_CELLS > 0) THEN
-     	  DO N=1,DUCT(N)%N_CELLS
+      DO N=1,N_DUCT_OUT
+         IF (DUCT(N)%N_CELLS > 0) THEN
+        DO N=1,DUCT(N)%N_CELLS
              WRITE(LU_HVAC) OUTVAL_D(1:N_DUCT_QUANTITY)
           ENDDO
        ELSE
@@ -13801,7 +13808,7 @@ File extension  & Short Description   & Reference    \\ \hline \hline
 This appendix lists all predefined species in FDS. If a species name ends in 'p' or 'm', this indicates the positive or negative charge state of that species. If a species ends in 's', this indicates the excited state of that species. This is typically written with a '*' as in CH$^*$. A 'Y in the Liquid column indicates that liquid properties are predefined, and a 'Y' in the Gibbs column indicates that Gibbs energy data is predefined.
 
 \begin{landscape}
-	\IfFileExists{spec_table.tex}{\input{spec_table.tex}}{\typeout{Error: Missing file spec\_table.tex}}
+      \IfFileExists{spec_table.tex}{\input{spec_table.tex}}{\typeout{Error: Missing file spec\_table.tex}}
 \end{landscape}
 
 
