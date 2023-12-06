@@ -13,7 +13,7 @@ IMPLICIT NONE (TYPE,EXTERNAL)
 PRIVATE
 
 PUBLIC :: INIT_TURB_ARRAYS, VARDEN_DYNSMAG, &
-          WALL_MODEL, COMPRESSION_WAVE, &
+          WALL_MODEL, COMPRESSION_WAVE, TENSOR_DIFFUSIVITY_MODEL, &
           SYNTHETIC_TURBULENCE, SYNTHETIC_EDDY_SETUP, TEST_FILTER, &
           TWOD_VORTEX_CERFACS, TWOD_VORTEX_UMD, TWOD_SOBOROT_UMD, &
           LOGLAW_HEAT_FLUX_MODEL, &
@@ -1589,6 +1589,187 @@ ENDIF
 H = RHO_G*U_TAU*CP_G/TPLUS
 
 END SUBROUTINE LOGLAW_HEAT_FLUX_MODEL
+
+
+SUBROUTINE TENSOR_DIFFUSIVITY_MODEL(NM,OPT_N)
+
+INTEGER, INTENT(IN) :: NM
+INTEGER, INTENT(IN), OPTIONAL :: OPT_N
+INTEGER :: I,J,K,N
+REAL(EB) :: DRHOZDX,DRHOZDY,DRHOZDZ,DUDX,DUDY,DUDZ,DVDX,DVDY,DVDZ,DWDX,DWDY,DWDZ,DTDX,DTDY,DTDZ
+REAL(EB), POINTER, DIMENSION(:,:,:,:) :: ZZP=>NULL(),RHO_D_DZDX=>NULL(),RHO_D_DZDY=>NULL(),RHO_D_DZDZ=>NULL()
+REAL(EB), POINTER, DIMENSION(:,:,:) :: RHOP=>NULL(),UU=>NULL(),VV=>NULL(),WW=>NULL(),KDTDX=>NULL(),KDTDY=>NULL(),KDTDZ=>NULL()
+REAL(EB), PARAMETER :: C_NL=0.13_EB ! See Kang, Chester, Meneveau, JFM, 2003
+
+CALL POINT_TO_MESH(NM)
+
+SCALAR_FLUX_IF: IF (PRESENT(OPT_N)) THEN
+
+   N = OPT_N
+
+   ! SGS scalar flux
+   ! CAUTION: The flux arrays must point to the same work arrays used in DIVERGENCE_PART_1
+   ! Note: Do not reinitialize!  RHO_D_DZDX, etc., already store molecular diffusive flux
+   RHO_D_DZDX=>SCALAR_WORK1
+   RHO_D_DZDY=>SCALAR_WORK2
+   RHO_D_DZDZ=>SCALAR_WORK3
+
+   IF (PREDICTOR) THEN
+      UU=>U
+      VV=>V
+      WW=>W
+      RHOP=>RHOS
+      ZZP=>ZZS
+   ELSE
+      UU=>US
+      VV=>VS
+      WW=>WS
+      RHOP=>RHO
+      ZZP=>ZZ
+   ENDIF
+
+   DO K=1,KBAR
+      DO J=1,JBAR
+         DO I=0,IBAR
+
+            DUDX = (UU(I+1,J,K)-UU(I-1,J,K))/(DX(I)+DX(I+1))
+            DUDY = (UU(I,J+1,K)-UU(I,J-1,K))/(DYN(J)+DYN(J+1))
+            DUDZ = (UU(I,J,K+1)-UU(I,J,K-1))/(DZN(K)+DZN(K+1))
+
+            DRHOZDX = RDXN(I)*(RHOP(I+1,J,K)*ZZP(I+1,J,K,N)-RHOP(I,J,K)*ZZP(I,J,K,N))
+
+            DRHOZDY = 0.25_EB*RDY(J)*( RHOP(I,J+1,K)*ZZP(I,J+1,K,N) + RHOP(I+1,J+1,K)*ZZP(I+1,J+1,K,N) &
+                                     - RHOP(I,J-1,K)*ZZP(I,J-1,K,N) - RHOP(I+1,J-1,K)*ZZP(I+1,J-1,K,N) )
+
+            DRHOZDZ = 0.25_EB*RDZ(K)*( RHOP(I,J,K+1)*ZZP(I,J,K+1,N) + RHOP(I+1,J,K+1)*ZZP(I+1,J,K+1,N) &
+                                     - RHOP(I,J,K-1)*ZZP(I,J,K-1,N) - RHOP(I+1,J,K-1)*ZZP(I+1,J,K-1,N) )
+
+            RHO_D_DZDX(I,J,K,N)=RHO_D_DZDX(I,J,K,N)+C_NL*(DX(I)**2*DUDX*DRHOZDX+DY(J)**2*DUDY*DRHOZDY+DZ(K)**2*DUDZ*DRHOZDZ)
+
+         ENDDO
+      ENDDO
+   ENDDO
+
+   DO K=1,KBAR
+      DO J=0,JBAR
+         DO I=1,IBAR
+
+            DVDX = (VV(I+1,J,K)-VV(I-1,J,K))/(DXN(I)+DXN(I+1))
+            DVDY = (VV(I,J+1,K)-VV(I,J-1,K))/(DY(J)+DY(J+1))
+            DVDZ = (VV(I,J,K+1)-VV(I,J,K-1))/(DZN(K)+DZN(K+1))
+
+            DRHOZDX = 0.25_EB*RDX(I)*( RHOP(I+1,J,K)*ZZP(I+1,J,K,N) + RHOP(I+1,J+1,K)*ZZP(I+1,J+1,K,N) &
+                                     - RHOP(I-1,J,K)*ZZP(I-1,J,K,N) - RHOP(I-1,J+1,K)*ZZP(I-1,J+1,K,N) )
+
+            DRHOZDY = RDYN(J)*(RHOP(I,J+1,K)*ZZP(I,J+1,K,N)-RHOP(I,J,K)*ZZP(I,J,K,N))
+
+            DRHOZDZ = 0.25_EB*RDZ(K)*( RHOP(I,J,K+1)*ZZP(I,J,K+1,N) + RHOP(I,J+1,K+1)*ZZP(I,J+1,K+1,N) &
+                                     - RHOP(I,J,K-1)*ZZP(I,J,K-1,N) - RHOP(I,J+1,K-1)*ZZP(I,J+1,K-1,N) )
+
+            RHO_D_DZDY(I,J,K,N)=RHO_D_DZDY(I,J,K,N)+C_NL*(DX(I)**2*DVDX*DRHOZDX+DY(J)**2*DVDY*DRHOZDY+DZ(K)**2*DVDZ*DRHOZDZ)
+
+         ENDDO
+      ENDDO
+   ENDDO
+
+   DO K=0,KBAR
+      DO J=1,JBAR
+         DO I=1,IBAR
+
+            DWDX = (WW(I+1,J,K)-WW(I-1,J,K))/(DXN(I+1)+DXN(I) )
+            DWDY = (WW(I,J+1,K)-WW(I,J-1,K))/(DYN(J+1)+DYN(J) )
+            DWDZ = (WW(I,J,K+1)-WW(I,J,K-1))/(DZ(K)   +DZ(K+1))
+
+            DRHOZDX = 0.25_EB*RDX(I)*( RHOP(I+1,J,K)*ZZP(I+1,J,K,N) + RHOP(I+1,J,K+1)*ZZP(I+1,J,K+1,N) &
+                                     - RHOP(I-1,J,K)*ZZP(I-1,J,K,N) - RHOP(I-1,J,K+1)*ZZP(I-1,J,K+1,N) )
+
+            DRHOZDY = 0.25_EB*RDY(J)*( RHOP(I,J+1,K)*ZZP(I,J+1,K,N) + RHOP(I,J+1,K+1)*ZZP(I,J+1,K+1,N) &
+                                     - RHOP(I,J-1,K)*ZZP(I,J-1,K,N) - RHOP(I,J-1,K+1)*ZZP(I,J-1,K+1,N) )
+
+            DRHOZDZ = RDZN(K)*(RHOP(I,J,K+1)*ZZP(I,J,K+1,N)-RHOP(I,J,K)*ZZP(I,J,K,N))
+
+            RHO_D_DZDZ(I,J,K,N)=RHO_D_DZDZ(I,J,K,N)+C_NL*(DX(I)**2*DWDX*DRHOZDX+DY(J)**2*DWDY*DRHOZDY+DZ(K)**2*DWDZ*DRHOZDZ)
+
+         ENDDO
+      ENDDO
+   ENDDO
+
+ELSE SCALAR_FLUX_IF
+
+   ! SGS thermal energy flux
+   ! CAUTION: The flux arrays must point to the same work arrays used in DIVERGENCE_PART_1
+   ! Note: Do not reinitialize!  KDTDX, etc., already store molecular diffusive flux
+   KDTDX=>WORK1
+   KDTDY=>WORK2
+   KDTDZ=>WORK3
+
+   IF (PREDICTOR) THEN
+      UU=>U
+      VV=>V
+      WW=>W
+   ELSE
+      UU=>US
+      VV=>VS
+      WW=>WS
+   ENDIF
+
+   DO K=1,KBAR
+      DO J=1,JBAR
+         DO I=0,IBAR
+
+            DUDX = (UU(I+1,J,K)-UU(I-1,J,K))/(DX(I)+DX(I+1))
+            DUDY = (UU(I,J+1,K)-UU(I,J-1,K))/(DYN(J)+DYN(J+1))
+            DUDZ = (UU(I,J,K+1)-UU(I,J,K-1))/(DZN(K)+DZN(K+1))
+
+            DTDX = RDXN(I)*(TMP(I+1,J,K)-TMP(I,J,K))
+            DTDY = 0.25_EB*RDY(J)*( TMP(I,J+1,K) + TMP(I+1,J+1,K) - TMP(I,J-1,K) - TMP(I+1,J-1,K) )
+            DTDZ = 0.25_EB*RDZ(K)*( TMP(I,J,K+1) + TMP(I+1,J,K+1) - TMP(I,J,K-1) - TMP(I+1,J,K-1) )
+
+            KDTDX(I,J,K) = KDTDX(I,J,K) + C_NL*(DX(I)**2*DUDX*DTDX + DY(J)**2*DUDY*DTDY + DZ(K)**2*DUDZ*DTDZ)
+
+         ENDDO
+      ENDDO
+   ENDDO
+
+   DO K=1,KBAR
+      DO J=0,JBAR
+         DO I=1,IBAR
+
+            DVDX = (VV(I+1,J,K)-VV(I-1,J,K))/(DXN(I)+DXN(I+1))
+            DVDY = (VV(I,J+1,K)-VV(I,J-1,K))/(DY(J)+DY(J+1))
+            DVDZ = (VV(I,J,K+1)-VV(I,J,K-1))/(DZN(K)+DZN(K+1))
+
+            DTDX = 0.25_EB*RDX(I)*( TMP(I+1,J,K) + TMP(I+1,J+1,K) - TMP(I-1,J,K) - TMP(I-1,J+1,K) )
+            DTDY = RDYN(J)*(TMP(I,J+1,K)-TMP(I,J,K))
+            DTDZ = 0.25_EB*RDZ(K)*( TMP(I,J,K+1) + TMP(I,J+1,K+1) - TMP(I,J,K-1) - TMP(I,J+1,K-1) )
+
+            KDTDY(I,J,K) = KDTDY(I,J,K) + C_NL*(DX(I)**2*DVDX*DTDX + DY(J)**2*DVDY*DTDY + DZ(K)**2*DVDZ*DTDZ)
+
+         ENDDO
+      ENDDO
+   ENDDO
+
+   DO K=0,KBAR
+      DO J=1,JBAR
+         DO I=1,IBAR
+
+            DWDX = (WW(I+1,J,K)-WW(I-1,J,K))/(DXN(I+1)+DXN(I) )
+            DWDY = (WW(I,J+1,K)-WW(I,J-1,K))/(DYN(J+1)+DYN(J) )
+            DWDZ = (WW(I,J,K+1)-WW(I,J,K-1))/(DZ(K)   +DZ(K+1))
+
+            DTDX = 0.25_EB*RDX(I)*( TMP(I+1,J,K) + TMP(I+1,J,K+1) - TMP(I-1,J,K) - TMP(I-1,J,K+1) )
+            DTDY = 0.25_EB*RDY(J)*( TMP(I,J+1,K) + TMP(I,J+1,K+1) - TMP(I,J-1,K) - TMP(I,J-1,K+1) )
+            DTDZ = RDZN(K)*(TMP(I,J,K+1)-TMP(I,J,K))
+
+            KDTDZ(I,J,K) = KDTDZ(I,J,K) + C_NL*(DX(I)**2*DWDX*DTDX + DY(J)**2*DWDY*DTDY + DZ(K)**2*DWDZ*DTDZ)
+
+         ENDDO
+      ENDDO
+   ENDDO
+
+ENDIF SCALAR_FLUX_IF
+
+END SUBROUTINE TENSOR_DIFFUSIVITY_MODEL
 
 
 SUBROUTINE TAU_WALL_IJ(TAU_IJ,SS,U_VELO,U_SURF,NN,DN,DIVU,MU,RHO,ROUGHNESS)
