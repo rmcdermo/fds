@@ -1371,7 +1371,7 @@ ENDIF
 END SUBROUTINE FORCED_CONVECTION_MODEL
 
 
-SUBROUTINE RAYLEIGH_HEAT_FLUX_MODEL(H,Z_STAR,DZ,TMP_W,TMP_G,K_G,RHO_G,CP_G,MU_G,VEL_G,GVEC,NVEC)
+SUBROUTINE RAYLEIGH_HEAT_FLUX_MODEL(H,Z_STAR,DZ,TMP_W,TMP_G,K_G,RHO_G,CP_G,MU_G,UVEC,GVEC,NVEC,UIMP)
 
 !!!!! EXPERIMENTAL !!!!!
 
@@ -1381,18 +1381,15 @@ SUBROUTINE RAYLEIGH_HEAT_FLUX_MODEL(H,Z_STAR,DZ,TMP_W,TMP_G,K_G,RHO_G,CP_G,MU_G,
 ! J.P. Holman, Heat Transfer, 7th Ed., McGraw-Hill, 1990, p. 346.
 
 REAL(EB), INTENT(OUT) :: H,Z_STAR
-REAL(EB), INTENT(IN) :: DZ,TMP_W,TMP_G,K_G,RHO_G,CP_G,MU_G,VEL_G,GVEC(3),NVEC(3)
-REAL(EB) :: NUSSELT,Q,ZC,NU_G,D_STAR,ALPHA_G,THETA_NATURAL,THETA_FORCED,Q_OLD,ERROR,DTMP,DTDN(3),EXPON_TURB,PR_G,EXPON_PR,&
-            C_L_FORCED,C_T_FORCED,Z_L_FORCED,Z_T_FORCED
-INTEGER :: ITER,REGIME
+REAL(EB), INTENT(IN) :: DZ,TMP_W,TMP_G,K_G,RHO_G,CP_G,MU_G,UVEC(3),GVEC(3),NVEC(3),UIMP
+REAL(EB) :: NUSSELT,Q,ZC,NU_G,ALPHA_G,PR_G,D_STAR_FORCED,D_STAR_NATURAL,THETA_NATURAL,THETA_FORCED,Q_OLD,ERROR,DTMP,DTDN(3),&
+            EXPON_TURB,EXPON_PR,VEL_G,EXPON_L_FORCED,EXPON_T_FORCED,C_L_FORCED,C_T_FORCED
+INTEGER :: ITER
 INTEGER, PARAMETER :: MAX_ITER=10
-! C_L = Z_L**(-0.8_EB)
-! C_T = C_L*Z_T**(-0.2_EB)
 REAL(EB), PARAMETER :: Z_L = 3.2_EB, Z_T=17._EB
 REAL(EB), PARAMETER :: C_L = 3.2_EB**(-0.8_EB), C_T = C_L*17._EB**(-0.2_EB)
-REAL(EB), PARAMETER :: RE_CRITICAL = 2300._EB
-! REAL(EB), PARAMETER :: Z_L_FORCED = 8._EB, Z_T_FORCED = 80._EB
-REAL(EB), PARAMETER :: EXPON_L_FORCED = 2._EB/3._EB, EXPON_T_FORCED = 8._EB/9._EB
+REAL(EB), PARAMETER :: Z_L_FORCED = 8._EB, Z_T_FORCED = 80._EB
+REAL(EB), PARAMETER :: EIGHT_NINETHS = 8._EB/9._EB
 INTEGER, PARAMETER :: NATURAL=1, FORCED=2
 
 IF (ABS(TMP_W-TMP_G)<TWO_EPSILON_EB) THEN
@@ -1405,28 +1402,27 @@ ZC = 0.5_EB*DZ
 NU_G = MU_G/RHO_G
 ALPHA_G = K_G/(RHO_G*CP_G)
 PR_G = NU_G/ALPHA_G
-THETA_NATURAL = 0.5_EB*(TMP_W+TMP_G)*K_G*ALPHA_G*NU_G/(GRAV+TWO_EPSILON_EB)
+VEL_G = MAX(SQRT(DOT_PRODUCT(UVEC,UVEC)),UIMP)
 THETA_FORCED  =     ABS(TMP_W-TMP_G)*K_G*ALPHA_G/(VEL_G+TWO_EPSILON_EB)
+THETA_NATURAL = 0.5_EB*(TMP_W+TMP_G)*K_G*ALPHA_G*NU_G/(GRAV+TWO_EPSILON_EB)
 
-IF (THETA_FORCED < THETA_NATURAL**2) THEN
-   REGIME = FORCED
-   IF (TMP_W>TMP_G) THEN
-      EXPON_PR = 0.4_EB
-   ELSE
-      EXPON_PR = 0.3_EB
-   ENDIF
-   Z_T_FORCED = SQRT(0.00575_EB * RE_CRITICAL**1.8_EB * PR_G**EXPON_PR)
-   Z_L_FORCED = 8._EB
-   C_L_FORCED = Z_L_FORCED**(-EXPON_L_FORCED)
-   C_T_FORCED = C_L_FORCED * Z_T_FORCED**(EXPON_L_FORCED-EXPON_T_FORCED)
+! needed if FORCED
+IF (TMP_W>TMP_G) THEN
+   EXPON_PR = 0.4_EB
 ELSE
-   REGIME = NATURAL
-   DTDN = (TMP_G-TMP_W)/ZC * NVEC
-   IF (DOT_PRODUCT(DTDN,GVEC) > -TWO_EPSILON_EB) THEN
-      EXPON_TURB=1._EB
-   ELSE
-      EXPON_TURB=0.8_EB
-   ENDIF
+   EXPON_PR = 0.3_EB
+ENDIF
+EXPON_L_FORCED = TWTH
+EXPON_T_FORCED = EIGHT_NINETHS
+C_L_FORCED = PR_G**(EXPON_PR-0.5_EB) * Z_L_FORCED**(-EXPON_L_FORCED)
+C_T_FORCED = PR_G**(EXPON_PR-0.8_EB) * C_L_FORCED * Z_T_FORCED**(EXPON_L_FORCED-EXPON_T_FORCED)
+
+! needed if NATURAL
+DTDN = (TMP_G-TMP_W)/ZC * NVEC
+IF (DOT_PRODUCT(DTDN,GVEC) > -TWO_EPSILON_EB) THEN
+   EXPON_TURB=1._EB
+ELSE
+   EXPON_TURB=0.8_EB
 ENDIF
 
 ! Step 1: assume a heat transfer coefficient
@@ -1435,63 +1431,53 @@ H = K_G/ZC ! initial guess
 DTMP = ABS(TMP_W-TMP_G)
 Q = H*DTMP
 
-REGIME_SELECT: SELECT CASE(REGIME)
-   CASE(NATURAL) REGIME_SELECT
-      NATURAL_LOOP: DO ITER=1,MAX_ITER
+Q_LOOP: DO ITER=1,MAX_ITER
 
-         ! Step 2: compute new thermal diffusive length scale, delta*
-         D_STAR = (THETA_NATURAL/Q)**0.25_EB
+   ! Step 2: compute new thermal diffusive length scale, delta*
+   D_STAR_FORCED  = SQRT(THETA_FORCED/Q)
+   D_STAR_NATURAL = (THETA_NATURAL/Q)**0.25_EB
 
-         ! Step 3: compute new z* (thermal)
-         Z_STAR = ZC/D_STAR
+   ! Set REGIME based on minimum delta*
 
-         ! Step 4: based on z*, choose scaling law
-         IF (Z_STAR<=Z_L) THEN
-            NUSSELT = 1._EB
-         ELSEIF (Z_STAR>Z_L .AND. Z_STAR<=Z_T) THEN
-            NUSSELT = C_L * Z_STAR**0.8_EB
-         ELSE
-            NUSSELT = C_T * Z_STAR**EXPON_TURB
-         ENDIF
+   REGIME_IF: IF (D_STAR_FORCED < D_STAR_NATURAL) THEN
 
-         ! Step 5: update heat transfer coefficient
-         H = NUSSELT*K_G/ZC
-         Q_OLD = Q
-         Q = H*DTMP
+      ! Step 3: compute new z* (thermal)
+      Z_STAR = ZC/D_STAR_FORCED
 
-         ERROR = ABS(Q-Q_OLD)/MAX(Q_OLD,TWO_EPSILON_EB)
+      ! Step 4: based on z*, choose scaling law
+      IF (Z_STAR<=Z_L_FORCED) THEN
+         NUSSELT = 1._EB
+      ELSEIF (Z_STAR>Z_L_FORCED .AND. Z_STAR<=Z_T_FORCED) THEN
+         NUSSELT = C_L_FORCED * Z_STAR**EXPON_L_FORCED
+      ELSE
+         NUSSELT = C_T_FORCED * Z_STAR**EXPON_T_FORCED
+      ENDIF
 
-         IF (ERROR<0.001_EB) EXIT NATURAL_LOOP
-      ENDDO NATURAL_LOOP
+   ELSE REGIME_IF
 
-   CASE(FORCED) REGIME_SELECT
-      FORCED_LOOP: DO ITER=1,MAX_ITER
+      ! Step 3: compute new z* (thermal)
+      Z_STAR = ZC/D_STAR_NATURAL
 
-         ! Step 2: compute new thermal diffusive length scale, delta*
-         D_STAR = SQRT(THETA_FORCED/Q)
+      ! Step 4: based on z*, choose scaling law
+      IF (Z_STAR<=Z_L) THEN
+         NUSSELT = 1._EB
+      ELSEIF (Z_STAR>Z_L .AND. Z_STAR<=Z_T) THEN
+         NUSSELT = C_L * Z_STAR**0.8_EB
+      ELSE
+         NUSSELT = C_T * Z_STAR**EXPON_TURB
+      ENDIF
 
-         ! Step 3: compute new z* (thermal)
-         Z_STAR = ZC/D_STAR
+   ENDIF REGIME_IF
 
-         ! Step 4: based on z*, choose scaling law
-         IF (Z_STAR<=Z_L_FORCED) THEN
-            NUSSELT = 1._EB
-         ELSEIF (Z_STAR>Z_L_FORCED .AND. Z_STAR<=Z_T_FORCED) THEN
-            NUSSELT = C_L_FORCED * Z_STAR**EXPON_L_FORCED
-         ELSE
-            NUSSELT = C_T_FORCED * Z_STAR**EXPON_T_FORCED
-         ENDIF
+   ! Step 5: update heat transfer coefficient
+   H = NUSSELT*K_G/ZC
+   Q_OLD = Q
+   Q = H*DTMP
 
-         ! Step 5: update heat transfer coefficient
-         H = NUSSELT*K_G/ZC
-         Q_OLD = Q
-         Q = H*DTMP
+   ERROR = ABS(Q-Q_OLD)/MAX(Q_OLD,TWO_EPSILON_EB)
+   IF (ERROR<0.001_EB) EXIT Q_LOOP
 
-         ERROR = ABS(Q-Q_OLD)/MAX(Q_OLD,TWO_EPSILON_EB)
-
-         IF (ERROR<0.001_EB) EXIT FORCED_LOOP
-      ENDDO FORCED_LOOP
-END SELECT REGIME_SELECT
+ENDDO Q_LOOP
 
 END SUBROUTINE RAYLEIGH_HEAT_FLUX_MODEL
 
@@ -1644,7 +1630,8 @@ SCALAR_FLUX_IF: IF (PRESENT(OPT_N)) THEN
             DRHOZDZ = 0.25_EB*RDZ(K)*( RHOP(I,J,K+1)*ZZP(I,J,K+1,N) + RHOP(I+1,J,K+1)*ZZP(I+1,J,K+1,N) &
                                      - RHOP(I,J,K-1)*ZZP(I,J,K-1,N) - RHOP(I+1,J,K-1)*ZZP(I+1,J,K-1,N) )
 
-            RHO_D_DZDX(I,J,K,N)=RHO_D_DZDX(I,J,K,N)+C_NL*(DX(I)**2*DUDX*DRHOZDX+DY(J)**2*DUDY*DRHOZDY+DZ(K)**2*DUDZ*DRHOZDZ)
+            RHO_D_DZDX(I,J,K,N) = RHO_D_DZDX(I,J,K,N) &
+                                + C_NL*(DX(I)**2*DUDX*DRHOZDX+DY(J)**2*DUDY*DRHOZDY+DZ(K)**2*DUDZ*DRHOZDZ)
 
          ENDDO
       ENDDO
@@ -1666,7 +1653,8 @@ SCALAR_FLUX_IF: IF (PRESENT(OPT_N)) THEN
             DRHOZDZ = 0.25_EB*RDZ(K)*( RHOP(I,J,K+1)*ZZP(I,J,K+1,N) + RHOP(I,J+1,K+1)*ZZP(I,J+1,K+1,N) &
                                      - RHOP(I,J,K-1)*ZZP(I,J,K-1,N) - RHOP(I,J+1,K-1)*ZZP(I,J+1,K-1,N) )
 
-            RHO_D_DZDY(I,J,K,N)=RHO_D_DZDY(I,J,K,N)+C_NL*(DX(I)**2*DVDX*DRHOZDX+DY(J)**2*DVDY*DRHOZDY+DZ(K)**2*DVDZ*DRHOZDZ)
+            RHO_D_DZDY(I,J,K,N) = RHO_D_DZDY(I,J,K,N) &
+                                + C_NL*(DX(I)**2*DVDX*DRHOZDX+DY(J)**2*DVDY*DRHOZDY+DZ(K)**2*DVDZ*DRHOZDZ)
 
          ENDDO
       ENDDO
@@ -1688,7 +1676,8 @@ SCALAR_FLUX_IF: IF (PRESENT(OPT_N)) THEN
 
             DRHOZDZ = RDZN(K)*(RHOP(I,J,K+1)*ZZP(I,J,K+1,N)-RHOP(I,J,K)*ZZP(I,J,K,N))
 
-            RHO_D_DZDZ(I,J,K,N)=RHO_D_DZDZ(I,J,K,N)+C_NL*(DX(I)**2*DWDX*DRHOZDX+DY(J)**2*DWDY*DRHOZDY+DZ(K)**2*DWDZ*DRHOZDZ)
+            RHO_D_DZDZ(I,J,K,N) = RHO_D_DZDZ(I,J,K,N) &
+                                + C_NL*(DX(I)**2*DWDX*DRHOZDX+DY(J)**2*DWDY*DRHOZDY+DZ(K)**2*DWDZ*DRHOZDZ)
 
          ENDDO
       ENDDO
