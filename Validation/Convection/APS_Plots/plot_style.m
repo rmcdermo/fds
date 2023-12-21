@@ -119,7 +119,7 @@ switch style
         % Paper properties
         Paper_Units     = 'inches'; %get(gcf,'paperunits')
         Paper_Pos       = [0.2500    2.5000    8.0000    6.0000]; %get(gcf,'paperposition')
-        Paper_Width     = Paper_Pos(3)*1.5;
+        Paper_Width     = Paper_Pos(3);
         Paper_Height    = Paper_Pos(4);
         Scat_Paper_Height = 6.0;
         Scat_Paper_Width  = 6.0;
