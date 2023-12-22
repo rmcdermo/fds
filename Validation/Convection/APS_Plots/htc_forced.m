@@ -6,6 +6,7 @@ close all
 clear all
 
 plot_style
+Paper_Width=1.5*Paper_Width;
 
 outdir = '../RAYLEIGH3/';
 pltdir = './';
