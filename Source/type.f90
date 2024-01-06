@@ -292,8 +292,6 @@ TYPE BOUNDARY_PROP1_TYPE
    REAL(EB) :: U_NORMAL_S=0._EB      !< Estimated normal component of velocity (m/s) at next time step
    REAL(EB) :: U_NORMAL_0=0._EB      !< Initial or specified normal component of velocity (m/s) at surface
    REAL(EB) :: U_TANG=0._EB          !< Tangential velocity (m/s) near surface
-   REAL(EB) :: UVEC(3)=0._EB         !< Gas cell center velocity components (m/s) near surface
-   REAL(EB) :: U_IMPACT=0._EB        !< Impact velocity of impinging plate (m/s)
    REAL(EB) :: RHO_F                 !< Gas density at the wall (kg/m3)
    REAL(EB) :: RHO_G                 !< Gas density in near wall cell (kg/m3)
    REAL(EB) :: RDN=1._EB             !< \f$ 1/ \delta n \f$ at the surface (1/m)
@@ -333,8 +331,10 @@ TYPE BOUNDARY_PROP2_TYPE
    REAL(EB) :: WORK2=0._EB           !< Work array
    REAL(EB) :: K_SUPPRESSION=0._EB   !< Suppression coefficent (m2/kg/s)
    REAL(EB) :: V_DEP=0._EB           !< Deposition velocity (m/s)
+   REAL(EB) :: U_IMPACT=0._EB        !< Impact velocity from stagnation pressure
 
-   INTEGER  :: SURF_INDEX=-1         !< Surface index
+   INTEGER :: SURF_INDEX=-1          !< Surface index
+   INTEGER :: HEAT_TRANSFER_REGIME=0 !< 1=Forced convection, 2=Natural convection, 3=Impact convection
 
 END TYPE BOUNDARY_PROP2_TYPE
 
