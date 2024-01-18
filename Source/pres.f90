@@ -1066,7 +1066,7 @@ END MODULE PRES
 
 MODULE LOCMAT_SOLVER
 
-! Unstructured Poisson solver with Pardiso by MESH
+! Unstructured Poisson solver with Pardiso or SuperLU by MESH
 ! Using this solver eliminates penetration errors on solid boundaries,
 ! but still requires iteration to reduce mesh-to-mesh velocity errors.
 ! This solver allows for coarse-fine mesh interfaces (GLMAT does not).
@@ -1077,6 +1077,9 @@ USE MESH_VARIABLES
 USE MESH_POINTERS
 #ifdef WITH_MKL
 USE MKL_PARDISO
+#endif
+#ifdef WITH_SULU
+USE SULU_WRAPPER
 #endif
 USE COMP_FUNCTIONS, ONLY: CURRENT_TIME
 
@@ -1131,7 +1134,8 @@ IF (SOLID_PHASE_ONLY) RETURN
 TNOW=CURRENT_TIME()
 
 ! If MKL library not present stop.
-#ifndef WITH_MKL
+#if defined WITH_MKL || defined WITH_SULU
+#else
 IF (MY_RANK==0) WRITE(LU_ERR,'(A)') &
 'Error: MKL Library compile flag was not defined for ULMAT as pressure solver.'
 ! Some error - stop flag for CALL STOP_CHECK(1).
@@ -1351,8 +1355,10 @@ ENDDO ZONE_MESH_LOOP_2
 CALL ULMAT_GET_H_REGFACES(NM)
 IF(CC_IBM) CALL GET_H_CUTFACES(ONE_NM=NM)
 
+#ifdef WITH_MKL
 ! Define Pardiso solver control parameters:
 CALL ULMAT_DEFINE_IPARM
+#endif
 
 ! Build zone matrix, apply BCs to it and factorize with PARDISO:
 CALL POINT_TO_MESH(NM)
