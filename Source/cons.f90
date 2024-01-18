@@ -840,6 +840,8 @@ CHARACTER(LABEL_LENGTH) :: RADCAL_SPECIES_ID(16)='NULL'
 END MODULE RADCONS
 
 
+#ifdef WITH_SULU
+
 !< author: Arthur Francisco
 !  version: 1.0.0
 !  date: july, 12 2018
@@ -904,3 +906,5 @@ END SUBROUTINE GET_UNIT
 
 
 END MODULE SULU_DATA_ARCH
+
+#endif /* WITH_SULU */
