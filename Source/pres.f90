@@ -2685,7 +2685,7 @@ IPARM(27) = 1  ! Check matrix
 RETURN
 END SUBROUTINE ULMAT_DEFINE_IPARM
 
-#endif ! WITH_MKL
+#endif /* WITH_MKL */
 
 
 ! ------------------------------- ULMAT_H_MATRIX_LUDCMP ----------------------------------
