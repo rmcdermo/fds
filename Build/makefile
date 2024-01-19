@@ -115,8 +115,9 @@ endif
 endif # OS test
 endif # MKLROOT test
 
-# test of preprocessing directive
+# for now this assumes SuperLU has been installed, later we will create a test
 FFLAGSSULU_GNU_CUSTOM = -DWITH_SULU
+LFLAGSSULU_GNU_CUSTOM = -L/usr/local/lib/ -lsuperlu -framework accelerate
 
 obj_mpi = prec.o cons.o prop.o devc.o type.o data.o mesh.o func.o gsmv.o smvv.o rcal.o turb.o soot.o \
           pois.o sulu.o geom.o ccib.o radi.o part.o vege.o ctrl.o hvac.o mass.o \
@@ -370,8 +371,8 @@ ompi_gnu_osx_dv : obj = fds_ompi_gnu_osx_dv
 ompi_gnu_osx_dv : setup $(obj_mpi)
 	$(FCOMPL) $(FFLAGS) $(FOPENMPFLAGS) -o $(obj) $(obj_mpi) $(LFLAGSMKL)
 
-ompi_gnu_macos_arm64_dv : FFLAGS = -m64 -O1 -fbacktrace -std=f2018 -frecursive -ffpe-summary=none -fall-intrinsics -static-libgfortran $(GITINFOGNU) $(GNU_COMPINFO) $(FFLAGSMKL_GNU_CUSTOM) $(FFLAGSSULU_GNU_CUSTOM) $(GFORTRAN_OPTIONS)
-ompi_gnu_macos_arm64_dv : LFLAGSMKL = $(LFLAGSMKL_GNU_CUSTOM) -L/usr/local/lib/ -lsuperlu -framework accelerate
+ompi_gnu_macos_arm64_dv : FFLAGS = -m64 -O1 -fbacktrace -std=f2018 -frecursive -ffpe-summary=none -fall-intrinsics -static-libgfortran $(GITINFOGNU) $(GNU_COMPINFO) $(FFLAGSSULU_GNU_CUSTOM)
+ompi_gnu_macos_arm64_dv : LFLAGSMKL = $(LFLAGSSULU_GNU_CUSTOM)
 ompi_gnu_macos_arm64_dv : FCOMPL = mpifort
 ompi_gnu_macos_arm64_dv : FOPENMPFLAGS =
 ompi_gnu_macos_arm64_dv : obj = fds_ompi_gnu_macos_arm64_dv
