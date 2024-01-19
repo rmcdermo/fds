@@ -61,7 +61,7 @@ else
   OPENMPI_COMPVERSION := $(shell ../Scripts/openmpi_compversion.sh)
   GNU_COMPVERSION := $(shell ../Scripts/gnu_compversion.sh)
   ifeq ($(shell ../Scripts/gnu_compmajorversion.sh),10)
-    GFORTRAN_OPTIONS=-fallow-argument-mismatch
+    GFORTRAN_OPTIONS=-fallow-argument-mismatch -static-libgfortran
   endif
 endif
 
@@ -371,7 +371,7 @@ ompi_gnu_osx_dv : setup $(obj_mpi)
 	$(FCOMPL) $(FFLAGS) $(FOPENMPFLAGS) -o $(obj) $(obj_mpi) $(LFLAGSMKL)
 
 ompi_gnu_macos_arm64_dv : FFLAGS = -m64 -O1 -fbacktrace -std=f2018 -frecursive -ffpe-summary=none -fall-intrinsics $(GITINFOGNU) $(GNU_COMPINFO) $(FFLAGSMKL_GNU_CUSTOM) $(FFLAGSSULU_GNU_CUSTOM) $(GFORTRAN_OPTIONS)
-ompi_gnu_macos_arm64_dv : LFLAGSMKL = $(LFLAGSMKL_GNU_CUSTOM) -L/usr/local/lib/ -lsuperlu -framework accelerate /usr/local/Cellar/gcc/13.2.0/lib/gcc/current/libgfortran.a
+ompi_gnu_macos_arm64_dv : LFLAGSMKL = $(LFLAGSMKL_GNU_CUSTOM) -L/usr/local/lib/ -lsuperlu -framework accelerate
 ompi_gnu_macos_arm64_dv : FCOMPL = mpifort
 ompi_gnu_macos_arm64_dv : FOPENMPFLAGS =
 ompi_gnu_macos_arm64_dv : obj = fds_ompi_gnu_macos_arm64_dv
