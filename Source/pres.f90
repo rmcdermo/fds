@@ -2651,6 +2651,9 @@ IF (H_MAT_IVEC>0) ZM%MTYPE   = SYMM_POSITIVE_DEFINITE ! Real symmetric positive 
 RETURN
 END SUBROUTINE ULMAT_BCS_H_MATRIX
 
+
+#ifdef WITH_MKL
+
 ! -------------------------------- ULMAT_DEFINE_IPARM ------------------------------------
 
 SUBROUTINE ULMAT_DEFINE_IPARM
@@ -2681,6 +2684,9 @@ IPARM(27) = 1  ! Check matrix
 
 RETURN
 END SUBROUTINE ULMAT_DEFINE_IPARM
+
+#endif ! WITH_MKL
+
 
 ! ------------------------------- ULMAT_H_MATRIX_LUDCMP ----------------------------------
 SUBROUTINE ULMAT_H_MATRIX_LUDCMP(NM,IPZ)
