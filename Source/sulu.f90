@@ -8,6 +8,8 @@
 
 !!! bundled for FDS by Vanella & McDermott January 2024 !!!
 
+#ifdef WITH_SULU
+
 module sulu_wrapper
 use iso_c_binding, only : C_INT, C_FLOAT, C_DOUBLE, C_CHAR, C_PTR, C_F_POINTER, C_NULL_CHAR, C_NULL_PTR
 implicit none
@@ -1855,3 +1857,5 @@ contains
 
 
 end module sulu_solver
+
+#endif /* WITH_SULU */
