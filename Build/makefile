@@ -374,7 +374,7 @@ ompi_gnu_osx_dv : setup $(obj_mpi)
 ompi_gnu_macos_arm64_dv : FFLAGS = -m64 -O1 -fbacktrace -std=f2018 -frecursive -ffpe-summary=none -fall-intrinsics -static-libgfortran $(GITINFOGNU) $(GNU_COMPINFO) $(FFLAGSSULU_GNU_CUSTOM)
 ompi_gnu_macos_arm64_dv : LFLAGSMKL = $(LFLAGSSULU_GNU_CUSTOM)
 ompi_gnu_macos_arm64_dv : FCOMPL = mpifort
-ompi_gnu_macos_arm64_dv : FOPENMPFLAGS =
+ompi_gnu_macos_arm64_dv : FOPENMPFLAGS = -fopenmp
 ompi_gnu_macos_arm64_dv : obj = fds_ompi_gnu_macos_arm64_dv
 ompi_gnu_macos_arm64_dv : setup $(obj_mpi)
 	$(FCOMPL) $(FFLAGS) $(FOPENMPFLAGS) -o $(obj) $(obj_mpi) $(LFLAGSMKL)
