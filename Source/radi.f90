@@ -2779,6 +2779,15 @@ INTEGER :: N_RADCAL_ARRAY_SIZE                     !< Number of radcal species p
 INTEGER :: RADCAL_SPECIES_INDEX(16)                !< Mapping of radcal species present to radcal calling function
 CHARACTER(LABEL_LENGTH) :: RADCAL_SPECIES_ID(16)='NULL'!< Name of radcal species
 
+! ============ added for ray rotation algorithm =============
+LOGICAL :: ALLOW_RANDOM_RADIATION_ROTATION = .FALSE.
+
+REAL(EB), ALLOCATABLE, DIMENSION(:)   :: DLX_R, DLY_R, DLZ_R
+REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: DLN_R, DLANG_R
+
+REAL(EB) :: RAD_ROT_MAT(3,3) = 0._EB
+! ===========================================================
+
 CONTAINS
 
 
@@ -2842,6 +2851,25 @@ ALLOCATE(DLM(1:NRA,3),STAT=IZERO)
 CALL ChkMemErr('RADI','DLM',IZERO)
 ALLOCATE(DLANG(3,1:NRA),STAT=IZERO)
 CALL ChkMemErr('RADI','DLANG',IZERO)
+
+! Allocations for ray rotation
+
+ALLOW_RANDOM_RADIATION_ROTATION = RANDOMIZE_RADIATION_DIRECTIONS .AND. .NOT.CYLINDRICAL
+
+ALLOCATE(DLX_R(1:NRA),STAT=IZERO)
+CALL ChkMemErr('RADI','DLX_R',IZERO)
+
+ALLOCATE(DLY_R(1:NRA),STAT=IZERO)
+CALL ChkMemErr('RADI','DLY_R',IZERO)
+
+ALLOCATE(DLZ_R(1:NRA),STAT=IZERO)
+CALL ChkMemErr('RADI','DLZ_R',IZERO)
+
+ALLOCATE(DLN_R(-3:3,1:NRA),STAT=IZERO)
+CALL ChkMemErr('RADI','DLN_R',IZERO)
+
+ALLOCATE(DLANG_R(3,1:NRA),STAT=IZERO)
+CALL ChkMemErr('RADI','DLANG_R',IZERO)
 
 ! Determine mean direction normals and sweeping orders
 ! as described in the FDS Tech. Ref. Guide Vol. 1 Sec. 6.2.2.
@@ -2913,6 +2941,11 @@ IF (CYLINDRICAL) THEN
    ! Wall direction cosines are only used for flux integrations, so they can by multiplied in advance.
    DLN = WEIGH_CYL * DLN
 ENDIF
+
+! For random rotations, initialize random arrays
+
+CALL SET_IDENTITY_MATRIX_3(RAD_ROT_MAT)
+CALL BUILD_ROTATED_RADIATION_DIRECTIONS(RAD_ROT_MAT)
 
 ! Calculate mirroring matrix
 
@@ -3419,6 +3452,137 @@ ENDDO
 END SUBROUTINE INIT_RADIATION
 
 
+! Ray rotation helper functions
+
+SUBROUTINE SET_IDENTITY_MATRIX_3(A)
+
+IMPLICIT NONE (TYPE,EXTERNAL)
+
+REAL(EB), INTENT(OUT) :: A(3,3)
+
+A = 0._EB
+A(1,1) = 1._EB
+A(2,2) = 1._EB
+A(3,3) = 1._EB
+
+END SUBROUTINE SET_IDENTITY_MATRIX_3
+
+
+SUBROUTINE BUILD_ROTATED_RADIATION_DIRECTIONS(RMAT)
+
+IMPLICIT NONE (TYPE,EXTERNAL)
+
+REAL(EB), INTENT(IN) :: RMAT(3,3)
+
+INTEGER :: N, NRA
+REAL(EB) :: VX,VY,VZ
+REAL(EB) :: WX,WY,WZ
+
+NRA = NUMBER_RADIATION_ANGLES
+
+DO N=1,NRA
+
+   VX = DLX(N)
+   VY = DLY(N)
+   VZ = DLZ(N)
+
+   DLX_R(N) = RMAT(1,1)*VX + RMAT(1,2)*VY + RMAT(1,3)*VZ
+   DLY_R(N) = RMAT(2,1)*VX + RMAT(2,2)*VY + RMAT(2,3)*VZ
+   DLZ_R(N) = RMAT(3,1)*VX + RMAT(3,2)*VY + RMAT(3,3)*VZ
+
+   WX = DLANG(1,N)
+   WY = DLANG(2,N)
+   WZ = DLANG(3,N)
+
+   DLANG_R(1,N) = RMAT(1,1)*WX + RMAT(1,2)*WY + RMAT(1,3)*WZ
+   DLANG_R(2,N) = RMAT(2,1)*WX + RMAT(2,2)*WY + RMAT(2,3)*WZ
+   DLANG_R(3,N) = RMAT(3,1)*WX + RMAT(3,2)*WY + RMAT(3,3)*WZ
+
+ENDDO
+
+IF (TWO_D) THEN
+   DLY_R(:) = 0._EB
+   DLANG_R(2,:) = 0._EB
+ENDIF
+
+DO N=1,NRA
+   DLN_R( 0,N) = 0._EB
+   DLN_R(-1,N) = -DLX_R(N)
+   DLN_R( 1,N) =  DLX_R(N)
+   DLN_R(-2,N) = -DLY_R(N)
+   DLN_R( 2,N) =  DLY_R(N)
+   DLN_R(-3,N) = -DLZ_R(N)
+   DLN_R( 3,N) =  DLZ_R(N)
+ENDDO
+
+END SUBROUTINE BUILD_ROTATED_RADIATION_DIRECTIONS
+
+
+SUBROUTINE GENERATE_RANDOM_SO2_ROTATION_MATRIX_Y(RMAT)
+
+USE GLOBAL_CONSTANTS, ONLY: TWOPI
+IMPLICIT NONE (TYPE,EXTERNAL)
+
+REAL(EB), INTENT(OUT) :: RMAT(3,3)
+
+REAL(EB) :: U, ANG, C, S
+
+CALL RANDOM_NUMBER(U)
+
+ANG = TWOPI*U
+C = COS(ANG)
+S = SIN(ANG)
+
+RMAT = 0._EB
+RMAT(1,1) =  C
+RMAT(1,3) =  S
+RMAT(2,2) =  1._EB
+RMAT(3,1) = -S
+RMAT(3,3) =  C
+
+END SUBROUTINE GENERATE_RANDOM_SO2_ROTATION_MATRIX_Y
+
+
+SUBROUTINE GENERATE_RANDOM_SO3_ROTATION_MATRIX(RMAT)
+
+USE GLOBAL_CONSTANTS, ONLY: TWOPI
+IMPLICIT NONE (TYPE,EXTERNAL)
+
+REAL(EB), INTENT(OUT) :: RMAT(3,3)
+
+REAL(EB) :: U1,U2,U3
+REAL(EB) :: R1,R2,T1,T2
+REAL(EB) :: Q1,Q2,Q3,Q4
+
+CALL RANDOM_NUMBER(U1)
+CALL RANDOM_NUMBER(U2)
+CALL RANDOM_NUMBER(U3)
+
+R1 = SQRT(1._EB-U1)
+R2 = SQRT(U1)
+T1 = TWOPI*U2
+T2 = TWOPI*U3
+
+Q1 = R1*SIN(T1)
+Q2 = R1*COS(T1)
+Q3 = R2*SIN(T2)
+Q4 = R2*COS(T2)
+
+RMAT(1,1) = 1._EB - 2._EB*(Q2*Q2 + Q3*Q3)
+RMAT(1,2) =         2._EB*(Q1*Q2 - Q3*Q4)
+RMAT(1,3) =         2._EB*(Q1*Q3 + Q2*Q4)
+
+RMAT(2,1) =         2._EB*(Q1*Q2 + Q3*Q4)
+RMAT(2,2) = 1._EB - 2._EB*(Q1*Q1 + Q3*Q3)
+RMAT(2,3) =         2._EB*(Q2*Q3 - Q1*Q4)
+
+RMAT(3,1) =         2._EB*(Q1*Q3 - Q2*Q4)
+RMAT(3,2) =         2._EB*(Q2*Q3 + Q1*Q4)
+RMAT(3,3) = 1._EB - 2._EB*(Q1*Q1 + Q2*Q2)
+
+END SUBROUTINE GENERATE_RANDOM_SO3_ROTATION_MATRIX
+
+
 !> \brief Compute radiative source term and transfer.
 !> \param T Current time (s)
 !> \param NM Mesh number
@@ -3497,6 +3661,10 @@ CHARACTER(20) :: FORMT
 ! Variables added for the WSGG model
 REAL(EB) :: X_H2O, X_CO2, MOL_RAT,PARTIAL_P,R_MIXTURE,TOTAL_P
 REAL(EB), ALLOCATABLE, DIMENSION(:) :: Z_ARRAY
+
+! Added for ray rotation
+INTEGER :: NEXT_ANGLE_INC_COUNTER
+LOGICAL :: START_NEW_ANGLE_CYCLE
 
 ALLOCATE(Z_ARRAY(N_TRACKED_SPECIES))
 
@@ -3579,6 +3747,25 @@ IF (UPDATE_INTENSITY) THEN
       SF  => SURFACE(CFA%SURF_INDEX)
       IF (SF%TMP_GAS_FRONT<=0._EB) B1%Q_RAD_IN = 0._EB
    ENDDO
+ENDIF
+
+! For ray rotation
+
+NEXT_ANGLE_INC_COUNTER = MOD(ANGLE_INC_COUNTER,ANGLE_INCREMENT) + 1
+START_NEW_ANGLE_CYCLE = UPDATE_INTENSITY .AND. RAD_ITER==1 .AND. NEXT_ANGLE_INC_COUNTER==1
+
+IF (ALLOW_RANDOM_RADIATION_ROTATION .AND. START_NEW_ANGLE_CYCLE) THEN
+   IF (TWO_D) THEN
+      CALL GENERATE_RANDOM_SO2_ROTATION_MATRIX_Y(RAD_ROT_MAT)
+   ELSE
+      CALL GENERATE_RANDOM_SO3_ROTATION_MATRIX(RAD_ROT_MAT)
+   ENDIF
+   CALL BUILD_ROTATED_RADIATION_DIRECTIONS(RAD_ROT_MAT)
+   IF (MY_RANK==0) THEN
+      WRITE(LU_ERR,'(A,I6,A,I6)') 'RADI: RAD_CALL_COUNTER=',RAD_CALL_COUNTER,', ANGLE_INC_COUNTER=',ANGLE_INC_COUNTER
+      WRITE(LU_ERR,'(A,3F12.6)') 'RADI: DLANG(:,1)   = ',DLANG(1,1),DLANG(2,1),DLANG(3,1)
+      WRITE(LU_ERR,'(A,3F12.6)') 'RADI: DLANG_R(:,1) = ',DLANG_R(1,1),DLANG_R(2,1),DLANG_R(3,1)
+   ENDIF
 ENDIF
 
 ! Loop over spectral bands
@@ -3935,7 +4122,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          IF (WC%BOUNDARY_TYPE/=SOLID_BOUNDARY) CYCLE
          BC => BOUNDARY_COORD(WC%BC_INDEX)
          BR => BOUNDARY_RADIA(WC%BR_INDEX)
-         INRAD_W(IW) = SUM(-DLN(BC%IOR,:)*BR%BAND(IBND)%ILW(:), 1, DLN(BC%IOR,:)<0._EB)
+         INRAD_W(IW) = SUM(-DLN_R(BC%IOR,:)*BR%BAND(IBND)%ILW(:), 1, DLN_R(BC%IOR,:)<0._EB)
       ENDDO
 
       DO ICF = INTERNAL_CFACE_CELLS_LB+1,INTERNAL_CFACE_CELLS_LB+N_INTERNAL_CFACE_CELLS
@@ -3943,7 +4130,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          BR  => BOUNDARY_RADIA(CFA%BR_INDEX)
          BC  => BOUNDARY_COORD(CFA%BC_INDEX)
          DO N=1,NRA
-            DLA = (/DLX(N),DLY(N),DLZ(N)/)
+            DLA = (/DLX_R(N),DLY_R(N),DLZ_R(N)/)
             DLF = DOT_PRODUCT(BC%NVEC,DLA) ! face normal * radiation angle
             IF (DLF<0._EB) INRAD_F(ICF) = INRAD_F(ICF) - DLF*BR%BAND(IBND)%ILW(N)
          ENDDO
@@ -4002,7 +4189,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                BR => BOUNDARY_RADIA(WC%BR_INDEX)
                B1 => BOUNDARY_PROP1(WC%B1_INDEX)
                IOR = BC%IOR
-               IF (DLN(IOR,N) < 0._EB) CYCLE WALL_LOOP1
+               IF (DLN_R(IOR,N) < 0._EB) CYCLE WALL_LOOP1
                II  = BC%II
                JJ  = BC%JJ
                KK  = BC%KK
@@ -4041,7 +4228,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
             ENDDO WALL_LOOP1
             !$OMP END PARALLEL DO
 
-            DLA = (/DLX(N),DLY(N),DLZ(N)/)
+            DLA = (/DLX_R(N),DLY_R(N),DLZ_R(N)/)
             CFACE_LOOP1: DO ICF=INTERNAL_CFACE_CELLS_LB+1,INTERNAL_CFACE_CELLS_LB+N_INTERNAL_CFACE_CELLS
                CFA => CFACE(ICF)
                IF (CFA%BOUNDARY_TYPE==NULL_BOUNDARY) CYCLE CFACE_LOOP1
@@ -4070,21 +4257,21 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
             IMAX = IEND
             JMAX = JEND
             KMAX = KEND
-            IF (DLX(N) < 0._EB) THEN
+            IF (DLX_R(N) < 0._EB) THEN
                ISTART = IBAR
                IEND   = 1
                ISTEP  = -1
                IMIN = IEND
                IMAX = ISTART
             ENDIF
-            IF (DLY(N) < 0._EB) THEN
+            IF (DLY_R(N) < 0._EB) THEN
                JSTART = JBAR
                JEND   = 1
                JSTEP  = -1
                JMIN = JEND
                JMAX = JSTART
             ENDIF
-            IF (DLZ(N) < 0._EB) THEN
+            IF (DLZ_R(N) < 0._EB) THEN
                KSTART = KBAR
                KEND   = 1
                KSTEP  = -1
@@ -4099,7 +4286,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                      ILXU = IL(I-ISTEP,J,K)
                      ILYU = IL(I,J-JSTEP,K)
                      ILZU = IL(I,J,K-KSTEP)
-                     IF (DLX(N)>=0._EB) THEN
+                     IF (DLX_R(N)>=0._EB) THEN
                         RU  = R(I-1)
                         RD  = R(I)
                      ELSE
@@ -4108,11 +4295,10 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                      ENDIF
                      RP  = SQRT(0.5_EB*(RU**2+RD**2))
                      VC  = DX(I)  * RP*DPHI0 * DZ(K)
-                     AXU = 2._EB*SIN(DPHI0/2.)*RU       * DZ(K) * ABS(DLX(N))
-                     AXD = 2._EB*SIN(DPHI0/2.)*RD       * DZ(K) * ABS(DLX(N))
-                     AYU = DX(I)             * DZ(K) * ABS(DLB(N))
-                     AYD = DX(I)             * DZ(K) * ABS(DLY(N))
-                     AZ  = DX(I)  * RP*DPHI0         * ABS(DLZ(N))
+                     AXU = 2._EB*SIN(DPHI0/2.)*RU       * DZ(K) * ABS(DLX_R(N))
+                     AXD = 2._EB*SIN(DPHI0/2.)*RD       * DZ(K) * ABS(DLX_R(N))
+                     AYD = DX(I)             * DZ(K) * ABS(DLY_R(N))
+                     AZ  = DX(I)  * RP*DPHI0         * ABS(DLZ_R(N))
                      IF (MODULO(N,NRP(1))==1) AYD = 0._EB  ! Zero out the terms involving symmetric overhang
                      IF (MODULO(N,NRP(1))==0) AYU = 0._EB
                      IC = CELL_INDEX(I,J,K)
@@ -4139,8 +4325,8 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                      ILXU  = IL(I-ISTEP,J,K)
                      ILZU  = IL(I,J,K-KSTEP)
                      VC  = DX(I) * DZ(K)
-                     AX  =         DZ(K) * ABS(DLX(N))
-                     AZ  = DX(I)         * ABS(DLZ(N))
+                     AX  =         DZ(K) * ABS(DLX_R(N))
+                     AZ  = DX(I)         * ABS(DLZ_R(N))
                      IC = CELL_INDEX(I,J,K)
                      IF (IC/=0) THEN
                         IF (CELL(IC)%SOLID) CYCLE I2LOOP
@@ -4191,10 +4377,10 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                      J = IJK_SLICE(2,IJK)
                      K = IJK_SLICE(3,IJK)
 
-                     AY1 = DZ(K) * ABS(DLY(N))
-                     AX  = DY(J) * DZ(K) * ABS(DLX(N))
+                     AY1 = DZ(K) * ABS(DLY_R(N))
+                     AX  = DY(J) * DZ(K) * ABS(DLX_R(N))
                      VC1 = DY(J) * DZ(K)
-                     AZ1 = DY(J) * ABS(DLZ(N))
+                     AZ1 = DY(J) * ABS(DLZ_R(N))
                      ILXU  = IL(I-ISTEP,J,K)
                      ILYU  = IL(I,J-JSTEP,K)
                      ILZU  = IL(I,J,K-KSTEP)
@@ -4321,13 +4507,13 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                BR => BOUNDARY_RADIA(WC%BR_INDEX)
                IOR = BC%IOR
                IF (TWO_D .AND. .NOT.CYLINDRICAL  .AND. ABS(IOR)==2) CYCLE WALL_LOOP2  ! 2-D non cylindrical
-               IF (DLN(IOR,N)>=0._EB) CYCLE WALL_LOOP2     ! outgoing
+               IF (DLN_R(IOR,N)>=0._EB) CYCLE WALL_LOOP2     ! outgoing
                IIG = BC%IIG
                JJG = BC%JJG
                KKG = BC%KKG
-               INRAD_W(IW) = INRAD_W(IW) + DLN(IOR,N) * BR%BAND(IBND)%ILW(N) ! update incoming rad, step 1
+               INRAD_W(IW) = INRAD_W(IW) + DLN_R(IOR,N) * BR%BAND(IBND)%ILW(N) ! update incoming rad, step 1
                BR%BAND(IBND)%ILW(N) = IL(IIG,JJG,KKG)
-               INRAD_W(IW) = INRAD_W(IW) - DLN(IOR,N) * BR%BAND(IBND)%ILW(N) ! update incoming rad, step 2
+               INRAD_W(IW) = INRAD_W(IW) - DLN_R(IOR,N) * BR%BAND(IBND)%ILW(N) ! update incoming rad, step 2
             ENDDO WALL_LOOP2
             !$OMP END DO
 
@@ -4336,9 +4522,10 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                WC => WALL(IW)
                IF (WC%BOUNDARY_TYPE/=OPEN_BOUNDARY)   CYCLE WALL_LOOP3
                BC => BOUNDARY_COORD(WC%BC_INDEX)
-               IF (DLN(BC%IOR,N)>=0._EB) CYCLE WALL_LOOP3     ! outgoing
+               IF (DLN_R(BC%IOR,N)>=0._EB) CYCLE WALL_LOOP3     ! outgoing
                BR => BOUNDARY_RADIA(WC%BR_INDEX)
-               BR%BAND(IBND)%ILW(ANGLE_INC_COUNTER) = BR%BAND(IBND)%ILW(ANGLE_INC_COUNTER) - DLN(BC%IOR,N)*IL(BC%IIG,BC%JJG,BC%KKG)
+               BR%BAND(IBND)%ILW(ANGLE_INC_COUNTER) = BR%BAND(IBND)%ILW(ANGLE_INC_COUNTER) &
+                                                      - DLN_R(BC%IOR,N)*IL(BC%IIG,BC%JJG,BC%KKG)
             ENDDO WALL_LOOP3
             !$OMP END DO
             !$OMP END PARALLEL
@@ -4407,9 +4594,9 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                                            +TWENTY_EPSILON_EB)
                      ENDIF
                   ENDIF
-                  COS_DLO = -DOT_PRODUCT(TEMP_ORIENTATION(1:3),DLANG(1:3,N))
+                  COS_DLO = -DOT_PRODUCT(TEMP_ORIENTATION(1:3),DLANG_R(1:3,N))
                   IF (COS_DLO > COS_HALF_VIEW_ANGLE(LP%ORIENTATION_INDEX)) THEN
-                     DLO = -(TEMP_ORIENTATION(1)*DLX(N) + TEMP_ORIENTATION(2)*DLY(N) + TEMP_ORIENTATION(3)*DLZ(N))
+                     DLO = -(TEMP_ORIENTATION(1)*DLX_R(N) + TEMP_ORIENTATION(2)*DLY_R(N) + TEMP_ORIENTATION(3)*DLZ_R(N))
                      BR => BOUNDARY_RADIA(LP%BR_INDEX)
                      IF (LPC%MASSLESS_TARGET) THEN
                         BR%BAND(IBND)%ILW(N) = DLO * IL(BC%IIG,BC%JJG,BC%KKG) * VIEW_ANGLE_FACTOR(LP%ORIENTATION_INDEX)
